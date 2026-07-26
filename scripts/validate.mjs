@@ -15,6 +15,7 @@ const requiredFiles = [
   'content/research/distributed-llm-inference-survey.html',
   'content/research/fine-grained-gpu-scheduling-survey.html',
   'content/research/leo-satellite-networking-survey.html',
+  'content/research/ai-job-projects-2026.html',
   'content/resources/open-source-llm-inference-shortlist.html',
   'downloads/llm-inference-simulation-platform-slides.pptx'
 ];

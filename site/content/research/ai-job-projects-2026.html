@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 求职项目调研 · 应用/Agent + Infra · 国内应届</title>
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --accent-soft:rgba(42,120,214,0.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19;
+      --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5;
+      --accent-soft:rgba(57,135,229,0.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5;
+    --accent-soft:rgba(57,135,229,0.14);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--page); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.65; font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  h1{font-size:26px;line-height:1.3;margin:0 0 6px;letter-spacing:-0.01em}
+  .sub{color:var(--ink2);font-size:14px;margin:0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:12px;padding:3px 9px;border:1px solid var(--border);border-radius:999px;color:var(--ink2);background:var(--surface)}
+  button.theme{
+    font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;cursor:pointer;
+    background:var(--surface);color:var(--ink2);border:1px solid var(--border);
+  }
+  button.theme:hover{color:var(--ink)}
+  section{margin:0 0 34px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin:0 0 14px;font-weight:600}
+  h3{font-size:17px;margin:0 0 8px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+  .hero{border-left:3px solid var(--series-1)}
+  .hero p{margin:0 0 10px}
+  .hero p:last-child{margin-bottom:0}
+  .hero strong{color:var(--ink)}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .stat .v{font-size:30px;font-weight:650;letter-spacing:-0.02em;line-height:1.1}
+  .stat .l{font-size:13px;color:var(--ink2);margin-top:4px}
+  .stat .n{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* chart */
+  .chart{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+  .chart .ctitle{font-size:15px;font-weight:600;margin:0 0 2px}
+  .chart .cnote{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+  .bars{display:flex;flex-direction:column;gap:2px}
+  .row{display:grid;grid-template-columns:132px 1fr;align-items:center;gap:12px;padding:2px 0;position:relative}
+  .row .lab{font-size:13px;color:var(--ink2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{position:relative;height:22px;display:flex;align-items:center}
+  .bar{height:18px;background:var(--series-1);border-radius:0 4px 4px 0;transition:width .25s ease}
+  .row:hover .bar{filter:brightness(1.08)}
+  .val{font-size:12.5px;color:var(--ink2);margin-left:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .row:hover .val{color:var(--ink)}
+  .tip{
+    position:absolute;left:0;bottom:calc(100% + 6px);z-index:5;
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:6px 10px;font-size:12.5px;color:var(--ink);white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,0.12);opacity:0;pointer-events:none;transition:opacity .12s
+  }
+  .row:hover .tip{opacity:1}
+  details.tv{margin-top:16px}
+  details.tv summary{font-size:12.5px;color:var(--muted);cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--grid)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+
+  /* project cards */
+  .proj{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:14px}
+  .proj .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .tag{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--ink2)}
+  .tag.flag{background:var(--accent-soft);border-color:transparent;color:var(--series-1);font-weight:600}
+  .proj .why{color:var(--ink2);margin:0 0 14px}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 14px;padding:12px 0;border-top:1px solid var(--grid);border-bottom:1px solid var(--grid)}
+  .meta div span{display:block;font-size:11.5px;color:var(--muted);letter-spacing:.03em}
+  .meta div b{font-weight:600;font-size:13.5px}
+  .blk{margin:0 0 12px}
+  .blk h4{font-size:13px;margin:0 0 6px;color:var(--ink)}
+  ul{margin:0;padding-left:18px}
+  li{margin:3px 0;color:var(--ink2)}
+  li b{color:var(--ink);font-weight:600}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+  .q{color:var(--ink2);font-size:13.5px;border-left:2px solid var(--axis);padding-left:10px;margin:4px 0}
+  .bad{border-left:3px solid var(--critical)}
+  .good{border-left:3px solid var(--good)}
+  .ex{font-size:13.5px;margin:0 0 4px}
+  .ex .k{font-weight:600}
+  .x{color:var(--critical)}
+  .c{color:var(--good)}
+  /* timeline */
+  .tl{position:relative;padding-left:22px}
+  .tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--grid)}
+  .tl .it{position:relative;margin-bottom:16px}
+  .tl .it::before{content:"";position:absolute;left:-21px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--series-1);box-shadow:0 0 0 2px var(--surface)}
+  .tl .it .w{font-size:12px;color:var(--muted);letter-spacing:.03em}
+  .tl .it .t{font-weight:600}
+  .warnbox{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warning);border-radius:14px;padding:16px 20px}
+  a{color:var(--series-1)}
+  .foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--grid);padding-top:16px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>找工作项目调研：AI 应用/Agent + AI Infra</h1>
+    <p class="sub">面向国内校招 · 应届/学生 · 调研日期 2026-07-26</p>
+    <div class="chips">
+      <span class="chip">目标：AI 应用 / Agent 开发</span>
+      <span class="chip">目标：AI Infra / 推理部署</span>
+      <span class="chip">市场：国内</span>
+      <span class="chip">阶段：学生 / 应届</span>
+    </div>
+  </div>
+  <button class="theme" onclick="var r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'">切换深色</button>
+</header>
+
+<section>
+  <div class="card hero">
+    <h3 style="margin-bottom:10px">结论先说</h3>
+    <p><strong>主攻 AI 应用/Agent，用一个「推理服务侧」项目搭桥到 Infra。</strong>两个方向的岗位量、学历门槛差别很大：应用/Agent 岗位多、本科可投；AI Infra 更偏硕博 + 硬 CS 基础（CUDA、分布式、框架源码）。应届同时全力打两条线基本做不到，但「应用主线 + 服务化/性能副线」是一份简历能同时被两类 HR 捞到的最优解。</p>
+    <p><strong>只做 2 个有深度的项目，不要做 6 个 demo。</strong>大厂对应届的明确要求是「2–3 个有技术深度的项目」，而面试官只挖你最深的那一个。判断标准很简单：这个项目你能不能连续被追问 20 分钟不露怯。</p>
+    <p><strong>项目里没有数字，等于没有项目。</strong>把「跑通了」升级成「召回率 65%→87%、P99 延迟降 40%、单请求成本降 3 倍」，是应届生和「另外 500 个也做了 RAG 的候选人」之间唯一的分水岭。</p>
+  </div>
+</section>
+
+<section>
+  <div class="warnbox">
+    <h3>⏰ 时间提醒</h3>
+    <p style="margin:0;color:var(--ink2)">今天是 <b>7 月 26 日</b>。国内大厂秋招<b>提前批一般 7–8 月已经在跑，正式批 9 月前后启动</b>；实习转正是更省力的入口（部分公司实习转正率超 50%）。所以下面给了两条路线：<b>6 周冲刺版</b>（赶今年秋招/提前批）和 <b>12 周完整版</b>（目标下一届或明年春招/暑期实习）。</p>
+  </div>
+</section>
+
+<section>
+  <h2>市场现状</h2>
+  <div class="grid3" style="margin-bottom:14px">
+    <div class="stat">
+      <div class="v">59.6%</div>
+      <div class="l">AI Agent 岗位月薪 &gt; 25K</div>
+      <div class="n">北京均值约 40K；仅 1 个岗位低于 10K</div>
+    </div>
+    <div class="stat">
+      <div class="v">35–45 万</div>
+      <div class="l">2026 届大厂 AI 岗年薪区间</div>
+      <div class="n">顶尖候选人 50 万+；含年终 3–6 个月</div>
+    </div>
+    <div class="stat">
+      <div class="v">2–3 个</div>
+      <div class="l">大厂对应届要求的「有深度」项目数</div>
+      <div class="n">另看竞赛成绩 + 开源贡献记录</div>
+    </div>
+  </div>
+
+  <div class="chart">
+    <p class="ctitle">岗位 JD 里的技能提及频率</p>
+    <p class="cnote">基于一份 AI Agent 岗位招聘分析（提及次数，非百分比）。悬停查看解读。</p>
+    <div class="bars" id="bars"></div>
+    <details class="tv">
+      <summary>表格视图</summary>
+      <table>
+        <thead><tr><th>技能</th><th class="num">提及次数</th><th>对项目的含义</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </details>
+  </div>
+  <p style="font-size:13px;color:var(--muted);margin-top:10px">读法：<b>RAG + 向量库的提及频率几乎和 Python 一样高</b>——它已经是硬门槛，不是加分项。真正能拉开差距的是 JD 里还没写透的部分：评测（evals）、可观测性、上下文工程、成本与延迟优化。</p>
+</section>
+
+<section>
+  <h2>两个方向的现实对比</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th></th><th>AI 应用 / Agent 开发</th><th>AI Infra / 推理部署</th></tr></thead>
+      <tbody>
+        <tr><td><b>岗位数量</b></td><td>多（互联网/AI 公司占 53.6% 雇主）</td><td>中等，但候选人更少</td></tr>
+        <tr><td><b>学历门槛</b></td><td>本科可投，看作品</td><td>偏硕博，看 CS 硬基础</td></tr>
+        <tr><td><b>核心壁垒</b></td><td>工程落地、检索/Agent 调优、评测体系</td><td>CUDA、分布式、推理框架源码、性能分析</td></tr>
+        <tr><td><b>必备技术栈</b></td><td>Python、LangChain/LangGraph、向量库、FastAPI、Docker、MCP</td><td>C++/CUDA、PyTorch、vLLM/SGLang/TensorRT-LLM、NCCL、Nsight</td></tr>
+        <tr><td><b>主要风险</b></td><td>同质化严重，人人一个 RAG 聊天机器人</td><td>准备周期长，没设备/没实习很难出成果</td></tr>
+        <tr><td><b>应届可行性</b></td><td style="color:var(--good);font-weight:600">高</td><td style="color:var(--serious);font-weight:600">中（需要一个真能跑的性能项目背书）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>推荐项目（按优先级）</h2>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P1 · 垂类多智能体「深度研究」系统</h3>
+      <span class="tag flag">旗舰 · 应用主线</span>
+      <span class="tag">难度 ★★★★</span>
+    </div>
+    <p class="why">选一个你有信息优势的垂类（比如医保政策、论文综述、招投标、财报），做一个能自主拆解问题 → 多源检索 → 交叉验证 → 产出带引用报告的系统。这是 2026 年最能体现「Agent 工程能力」的项目形态：单 Agent 已经不够看，主智能体调度 + 子智能体分工才是当下 JD 在问的东西。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>LangGraph / DeepAgents</b></div>
+      <div><span>周期</span><b>4–6 周</b></div>
+      <div><span>代码量</span><b>3k–6k 行</b></div>
+      <div><span>适配岗位</span><b>Agent 开发、AI 应用</b></div>
+    </div>
+    <div class="blk">
+      <h4>必须做到（否则就是普通 demo）</h4>
+      <ul>
+        <li><b>任务规划可回溯</b>：把 plan / 子任务 / 工具调用全部落 trace，能在 UI 上重放一次研究过程（WebSocket 推实时进度）</li>
+        <li><b>失败与降级</b>：工具超时、检索为空、子 Agent 跑偏时的重试与兜底策略——面试官最爱问这个</li>
+        <li><b>上下文工程</b>：长任务下的记忆压缩、子 Agent 只拿必要上下文、token 预算控制（讲得出「为什么这样切」）</li>
+        <li><b>自建评测集</b>：50–200 条带标准答案的问题，跑出「引用准确率 / 事实错误率 / 平均耗时 / 单次成本」，并有 baseline（单 Agent + 朴素 RAG）对照</li>
+      </ul>
+    </div>
+    <div class="blk">
+      <h4>面试一定会追问</h4>
+      <p class="q">为什么用多 Agent 而不是一个长 prompt？成本涨了多少，效果涨了多少，这笔交易划算吗？</p>
+      <p class="q">子 Agent 之间怎么传上下文？为什么不直接共享全量 history？</p>
+      <p class="q">怎么判断一份研究报告「够好了」，停止条件是什么？</p>
+    </div>
+  </div>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P2 · 生产级 RAG 知识问答（带评测闭环）</h3>
+      <span class="tag flag">必做地基</span>
+      <span class="tag">难度 ★★★</span>
+    </div>
+    <p class="why">RAG 提及频率仅次于 Python，不做等于缺一块。但「做了 RAG」不值钱，<b>值钱的是你把它从 70 分调到 90 分的那条完整路径</b>。所以这个项目的重点不是搭起来，而是每一步优化都有前后数字。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>混合检索 + Rerank</b></div>
+      <div><span>周期</span><b>3–4 周</b></div>
+      <div><span>数据</span><b>真实脏文档（PDF/表格/扫描件）</b></div>
+      <div><span>适配岗位</span><b>几乎所有 AI 应用岗</b></div>
+    </div>
+    <div class="blk">
+      <h4>差异化的关键动作</h4>
+      <ul>
+        <li><b>向量 + BM25 混合检索</b>，再加 Rerank 模型；每加一层都记录召回率/准确率变化</li>
+        <li><b>分块策略实验</b>：固定长度 vs 递归切分 vs 语义切分 vs 父子块，拿数据说明为什么选它</li>
+        <li><b>引用溯源 + 幻觉拦截</b>：答案必须指回原文片段；答不出时明确拒答（拒答率也是指标）</li>
+        <li><b>难场景专治</b>：表格问答、跨文档对比、多跳问题、时效冲突（新旧版本文件谁优先）</li>
+        <li><b>评测自动化</b>：改一行代码就能跑全量回归，形成「离线评测 → 发现退化 → 修复」的闭环</li>
+      </ul>
+    </div>
+    <div class="blk">
+      <h4>面试一定会追问</h4>
+      <p class="q">你的评测集怎么来的？标注标准是什么？会不会过拟合到你自己的测试集？</p>
+      <p class="q">Rerank 带来多少收益、多少延迟？线上你会不会开它？</p>
+      <p class="q">用户问了一个知识库里没有答案的问题，系统的行为是什么？</p>
+    </div>
+  </div>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P3 · 结构化数据 Agent（NL2SQL 智能问数）</h3>
+      <span class="tag">替补 / 可换 P1</span>
+      <span class="tag">难度 ★★★</span>
+    </div>
+    <p class="why">业务落地感最强的一类项目，国内企业需求很实在（电商问数、经营分析）。技术上把数仓、向量检索、字段值检索、工作流编排串成一条链路，比纯文本 RAG 更能体现工程能力。如果你更想去做 ToB / 业务中台方向，用它替代 P1。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>MySQL + Qdrant + ES + LangGraph + FastAPI</b></div>
+      <div><span>周期</span><b>3–4 周</b></div>
+      <div><span>难点</span><b>Schema 召回、口径歧义</b></div>
+      <div><span>适配岗位</span><b>AI 应用、数据智能</b></div>
+    </div>
+    <div class="blk">
+      <h4>必须做到</h4>
+      <ul>
+        <li><b>Schema 检索</b>：几百张表里选对表和字段（向量召回表结构 + ES 召回枚举值）</li>
+        <li><b>SQL 正确性保障</b>：语法校验、执行前 dry-run、结果合理性检查、失败自修复循环</li>
+        <li><b>指标口径消歧</b>：「GMV」到底算不算退款？做一层业务指标字典而不是硬塞进 prompt</li>
+        <li><b>指标</b>：执行成功率、SQL 精确匹配率 / 结果一致率，分难度分级统计</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P4 · LLM 推理服务网关（应用 ↔ Infra 的桥）</h3>
+      <span class="tag flag">双投必备</span>
+      <span class="tag">难度 ★★★☆</span>
+    </div>
+    <p class="why">这是整份方案的关键一环：<b>它让同一份简历同时对应用岗和 Infra 岗成立</b>。做一个自己的推理服务层——多模型路由、语义缓存、限流熔断、可观测、压测报告、成本核算。应用岗看到的是「你懂上线」，Infra 岗看到的是「你懂吞吐和延迟」。而且它不需要 8 卡集群，一张消费级显卡或租云卡按小时就能做。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>vLLM/SGLang + FastAPI + Redis + Prometheus/Grafana</b></div>
+      <div><span>周期</span><b>3–4 周</b></div>
+      <div><span>硬件</span><b>单卡即可（可租）</b></div>
+      <div><span>适配岗位</span><b>AI 应用 + AI Infra 双向</b></div>
+    </div>
+    <div class="blk">
+      <h4>必须做到</h4>
+      <ul>
+        <li><b>压测曲线</b>：用 k6/locust 画出并发 → 吞吐(tokens/s) → P50/P99 延迟的关系曲线，找到饱和点</li>
+        <li><b>调参实证</b>：连续批处理参数、<code>max_num_seqs</code>、<code>gpu_memory_utilization</code>、前缀缓存开关各自带来多少吞吐变化</li>
+        <li><b>量化对比</b>：FP16 / INT8 / AWQ 或 GPTQ 的吞吐、显存、精度损失三维对照表</li>
+        <li><b>语义缓存 + 限流</b>：缓存命中率、成本下降幅度；令牌桶限流与优雅降级</li>
+        <li><b>成本账</b>：每千次请求的 GPU 成本，和直接调 API 对比，给出什么规模下自建划算</li>
+      </ul>
+    </div>
+    <div class="blk">
+      <h4>面试一定会追问</h4>
+      <p class="q">吞吐上不去时你怎么定位瓶颈是算力、显存带宽还是通信？（答不出 Roofline 会很吃亏）</p>
+      <p class="q">PagedAttention 和 continuous batching 分别解决什么问题？</p>
+      <p class="q">P99 延迟被长请求拖高，你怎么做请求调度？</p>
+    </div>
+  </div>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P5 · mini-vLLM 复现 + 源码贡献</h3>
+      <span class="tag flag">Infra 主线</span>
+      <span class="tag">难度 ★★★★★</span>
+    </div>
+    <p class="why">如果真要打 AI Infra，这是绕不过去的一关。从零实现一个小型推理引擎（KV cache 分页管理 + 连续批处理 + 简单调度器），再去读 vLLM/SGLang 源码、写系列笔记、提几个能被 merge 的小 PR（文档、测试、小 bug、算子适配）。<b>开源贡献记录是大厂 JD 明确列出的加分项</b>，而且它是极少数能让本科生绕过学历筛的东西。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>PyTorch + CUDA/Triton</b></div>
+      <div><span>周期</span><b>6–10 周</b></div>
+      <div><span>产出</span><b>代码 + 系列博客 + PR</b></div>
+      <div><span>适配岗位</span><b>AI Infra、推理优化</b></div>
+    </div>
+    <div class="blk">
+      <h4>分阶段做，别一口吃下</h4>
+      <ul>
+        <li><b>第 1 步</b>：朴素逐 token 生成 → 加静态批 → 加 continuous batching，记录吞吐提升倍数</li>
+        <li><b>第 2 步</b>：实现分页 KV cache（block 分配/回收/复用），对比显存碎片率</li>
+        <li><b>第 3 步</b>：手写一个融合算子（softmax / layernorm / 简版 FlashAttention），用 Nsight 或 PyTorch Profiler 出前后对比</li>
+        <li><b>第 4 步</b>：读 vLLM 调度器与 SGLang RadixAttention，写 5–8 篇源码笔记发出去（这本身就是 personal brand）</li>
+        <li><b>第 5 步</b>：从 good first issue 起提 PR，目标 merge 1–3 个</li>
+      </ul>
+    </div>
+    <div class="blk">
+      <h4>配套要背的高频考点</h4>
+      <ul>
+        <li>KV cache 管理：PagedAttention、前缀/Radix 复用、continuous batching</li>
+        <li>量化：GPTQ / AWQ / SmoothQuant / FP8 的原理与精度损失控制</li>
+        <li>投机解码；动态批 vs 静态批的吞吐-延迟权衡</li>
+        <li>分布式训练基础：ZeRO 1/2/3、FSDP、Megatron 3D 并行、All-Reduce 通信</li>
+        <li>手撕高频：Top-K/Beam Search 采样、LRU Cache、MoE Top-K 路由</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="proj">
+    <div class="head">
+      <h3>P6 · Agent 评测 &amp; 可观测性工具（差异化加分）</h3>
+      <span class="tag">小而锋利</span>
+      <span class="tag">难度 ★★☆</span>
+    </div>
+    <p class="why">几乎没有应届生做这个方向，但每家真正在做 Agent 落地的公司都缺人。做一个轻量的 evals + trace 工具：自动跑测试集、按维度打分（正确性/引用有效性/工具调用正确率/成本）、给 PR 出回归报告。可以对着 Langfuse 这类开源平台学架构，然后做成你自己项目 P1/P2 的质量门禁——<b>三个项目就此串成一个体系，而不是三个孤立作品</b>。</p>
+    <div class="meta">
+      <div><span>技术栈</span><b>OpenTelemetry + LLM-as-judge</b></div>
+      <div><span>周期</span><b>1.5–2 周</b></div>
+      <div><span>亮点</span><b>候选人稀缺度高</b></div>
+      <div><span>适配岗位</span><b>AI 应用、AI 平台/工程效能</b></div>
+    </div>
+    <div class="blk">
+      <h4>做到这几点就够</h4>
+      <ul>
+        <li>trace 全链路（prompt / 工具调用 / token / 耗时 / 成本）落库可查</li>
+        <li>LLM-as-judge + 规则校验双轨评分，并且验证过 judge 与人工标注的一致性</li>
+        <li>CI 集成：效果掉超过阈值就红灯，附差异样本</li>
+        <li>替代方案：做 3–5 个实用 MCP server + 一个自己的 host，展示对工具生态的理解</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>组合怎么选</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>只投应用 / Agent</h3>
+      <p style="color:var(--ink2);margin:0"><b>P2（地基）+ P1（旗舰）</b>，有余力补 P6。简历上 P1 写 6–8 行，P2 写 4–5 行，P6 一行带过但面试时能展开。</p>
+    </div>
+    <div class="card">
+      <h3>双投（推荐你）</h3>
+      <p style="color:var(--ink2);margin:0"><b>P2 + P4</b>。P4 是桥：投应用岗时它叫「服务化与成本优化」，投 Infra 岗时它叫「推理性能调优」。同一个项目，两套讲法。</p>
+    </div>
+    <div class="card">
+      <h3>铁心冲 Infra</h3>
+      <p style="color:var(--ink2);margin:0"><b>P5 + P4</b>，且必须配「源码笔记 + 至少 1 个 merged PR」。同时把分布式训练那套八股补齐，否则一面就被问穿。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>别做这些（同质化重灾区）</h2>
+  <div class="card bad">
+    <ul>
+      <li><b>套壳 chatbot</b>——调个 API 加个前端，没有检索、没有评测、没有指标</li>
+      <li><b>情感分析 / 文本分类</b>——2018 年的项目，现在只证明你没跟上</li>
+      <li><b>「在 HF 上微调了一个模型」</b>——跑通 LoRA 脚本人人都会，没有数据构造和评测就没有信息量</li>
+      <li><b>教程原样复刻</b>——面试官见过同一个仓库十遍；至少换数据、换难场景、加上你自己的优化对比</li>
+      <li><b>项目凑数量</b>——5 个浅项目的说服力远低于 2 个能被追问 20 分钟的项目</li>
+      <li><b>只有架构图没有数字</b>——「效果不错」「性能有提升」这类表述会被直接判定为没做过</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>简历怎么写（四要素 + 正反例）</h2>
+  <div class="card">
+    <p style="color:var(--ink2);margin-top:0">每个项目按 <b>项目描述 → 个人工作 → 技术难点 → 收获</b> 四段写。核心原则：<b>面试官考察的是你怎么解决问题，不是你做了哪些操作。</b>每一条都要能扛住追问。</p>
+    <div style="border-top:1px solid var(--grid);padding-top:14px;margin-top:14px">
+      <p class="ex"><span class="k x">✗ 项目描述</span> 基于大模型的智能问答系统</p>
+      <p class="ex"><span class="k c">✓ 项目描述</span> 面向 10 万+ 员工的企业知识库问答系统，支持 3 万份制度文档的检索与溯源</p>
+      <p class="ex" style="margin-top:12px"><span class="k x">✗ 个人工作</span> 使用 LangChain 搭建了 RAG 流程</p>
+      <p class="ex"><span class="k c">✓ 个人工作</span> 设计向量 + BM25 混合检索并引入 Rerank，答案准确率从 72% 提升到 91%</p>
+      <p class="ex" style="margin-top:12px"><span class="k x">✗ 技术难点</span> 检索效果不太好</p>
+      <p class="ex"><span class="k c">✓ 技术难点</span> 长文档单块信息丢失导致召回差，改用递归切分 + 上下文窗口扩展，召回率 65%→87%</p>
+      <p class="ex" style="margin-top:12px"><span class="k x">✗ 收获</span> 学会了 LangChain 框架</p>
+      <p class="ex"><span class="k c">✓ 收获</span> 形成了一套 RAG 效果归因与优化的方法论，能定位问题出在切分、召回还是生成环节</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>数字从哪来（学生也能造出真指标）</h2>
+  <div class="card good">
+    <ul>
+      <li><b>自建评测集</b>：50–200 条问题 + 标准答案，自己标（标注标准写清楚，面试会问）。这是最重要的一步——没有评测集就没有一切数字</li>
+      <li><b>永远留 baseline</b>：朴素实现 vs 你的优化版，指标差值就是你的价值</li>
+      <li><b>压测</b>：k6 / locust 出并发-吞吐-延迟曲线，报 P50/P99 而不是平均值</li>
+      <li><b>成本</b>：每千次请求的 token 花费 / GPU 小时成本，优化前后对比</li>
+      <li><b>消融实验</b>：去掉 Rerank、去掉缓存、去掉多 Agent 分别掉多少，证明每个模块都不是摆设</li>
+      <li><b>失败案例集</b>：整理 10 个典型 bad case 和你的处理办法。面试时主动拿出来讲，可信度直接拉满</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>面试高频考点速查</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>应用 / Agent 向</h3>
+      <ul>
+        <li>Transformer 基础、Attention、位置编码</li>
+        <li>RAG 全链路：切分、embedding 选型、混合检索、Rerank、query 改写、多跳</li>
+        <li>幻觉的成因与工程缓解手段</li>
+        <li>Agent：ReAct、Function Calling、工具选择错误怎么办、循环怎么终止</li>
+        <li>多 Agent 协作模式与上下文传递</li>
+        <li>MCP 协议解决什么问题、和普通工具调用的区别</li>
+        <li>上下文工程：长会话记忆、压缩、token 预算</li>
+        <li>Prompt 注入与越狱防护</li>
+        <li>微调基础：LoRA/QLoRA、什么场景该微调而不是 RAG</li>
+        <li>评测：怎么衡量一个 Agent 好不好</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Infra / 推理向</h3>
+      <ul>
+        <li>KV cache、PagedAttention、前缀 / Radix 复用</li>
+        <li>continuous batching vs 静态批；吞吐与延迟权衡</li>
+        <li>Prefill / Decode 阶段特性差异与分离部署</li>
+        <li>量化：GPTQ / AWQ / SmoothQuant / FP8</li>
+        <li>投机解码原理与收益条件</li>
+        <li>FlashAttention 做了什么优化</li>
+        <li>Roofline 模型判断算力 / 带宽 / 通信瓶颈</li>
+        <li>分布式：ZeRO 1/2/3、FSDP、Megatron 3D 并行、All-Reduce</li>
+        <li>MFU 指标、Nsight / PyTorch Profiler 用法</li>
+        <li>系统设计：设计一个高 QPS LLM 服务（调度、扩缩容、成本）</li>
+        <li>手撕：Top-K / Beam Search、LRU Cache、MoE Top-K 路由</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>时间规划</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>6 周冲刺版（赶今年秋招）</h3>
+      <div class="tl" style="margin-top:12px">
+        <div class="it"><div class="w">第 1–2 周</div><div class="t">P2 打通并做出第一版数字</div><div style="color:var(--ink2);font-size:13.5px">先搭最简 RAG + 建评测集（这周必须建），跑出 baseline</div></div>
+        <div class="it"><div class="w">第 3 周</div><div class="t">P2 优化冲刺</div><div style="color:var(--ink2);font-size:13.5px">混合检索、Rerank、切分实验，每步留前后对比</div></div>
+        <div class="it"><div class="w">第 4–5 周</div><div class="t">P4 推理服务网关</div><div style="color:var(--ink2);font-size:13.5px">vLLM 部署 + 压测曲线 + 量化对比 + 成本账</div></div>
+        <div class="it"><div class="w">第 6 周</div><div class="t">包装与投递</div><div style="color:var(--ink2);font-size:13.5px">README + 架构图 + 指标表、简历四要素改写、八股速刷、模拟面试</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>12 周完整版（目标更高）</h3>
+      <div class="tl" style="margin-top:12px">
+        <div class="it"><div class="w">第 1–3 周</div><div class="t">P2 生产级 RAG</div><div style="color:var(--ink2);font-size:13.5px">含难场景（表格、多跳、时效冲突）与自动化回归</div></div>
+        <div class="it"><div class="w">第 4–8 周</div><div class="t">P1 多智能体研究系统</div><div style="color:var(--ink2);font-size:13.5px">规划、trace 重放、上下文工程、与单 Agent 的对照实验</div></div>
+        <div class="it"><div class="w">第 6–7 周（并行）</div><div class="t">P6 评测与可观测</div><div style="color:var(--ink2);font-size:13.5px">直接做成 P1/P2 的质量门禁，三个项目串成体系</div></div>
+        <div class="it"><div class="w">第 9–11 周</div><div class="t">P4 或 P5</div><div style="color:var(--ink2);font-size:13.5px">看你最终偏应用还是 Infra；选 P5 就同步写源码笔记、提 PR</div></div>
+        <div class="it"><div class="w">第 12 周</div><div class="t">输出与投递</div><div style="color:var(--ink2);font-size:13.5px">技术博客 3–5 篇、GitHub 整理、内推与提前批</div></div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted);margin-top:12px">贯穿全程的两件事：<b>① 每周写一篇技术笔记发出去</b>（面试时它就是你的证据链）；<b>② 尽早投实习</b>，转正是最省力的路径。</p>
+</section>
+
+<section>
+  <h2>参考与学习资源</h2>
+  <div class="card">
+    <ul>
+      <li><a href="https://github.com/didilili/ai-agents-from-zero">ai-agents-from-zero</a> — 国内向 Agent 学习路径 + 两个完整实战项目（电商问数、深度研搜）</li>
+      <li><a href="https://notes.kamacoder.com/interview/llm/">2026 大模型面经汇总</a> · <a href="https://www.xiaolincoding.com/project/xiaolinnote.html">小林 coding 大模型面试题</a> — 应用向八股</li>
+      <li><a href="https://notes.kamacoder.com/jianli/llm/llm_5.html">大模型项目经历四要素写法</a> — 简历改写直接照着做</li>
+      <li><a href="https://smarter.xin/posts/cc221b1e/">vLLM 系统拆解 · Infra 与推理岗面试手册</a> · <a href="https://www.cnblogs.com/xmwblogs/p/19669357">AI Infra 面试收录</a></li>
+      <li><a href="https://github.com/langfuse/langfuse">Langfuse</a> — LLM 可观测性/评测平台，P6 的架构参考</li>
+      <li><a href="https://github.com/vllm-project/vllm">vLLM</a> · <a href="https://github.com/sgl-project/sglang">SGLang</a> — 源码阅读与开源贡献目标</li>
+      <li><a href="https://www.wondercv.com/blog/BsN2umNJ.html">2026 届大厂 AI 秋招攻略</a> — 公司、时间线、薪资参考</li>
+    </ul>
+  </div>
+</section>
+
+<p class="foot">调研于 2026-07-26。薪资与岗位数据来自公开招聘分析与秋招总结类文章，属参考量级而非精确统计；具体门槛以目标公司当年 JD 为准。</p>
+
+</div>
+
+<script>
+  var DATA = [
+    {k:"Python",             v:125, n:"硬门槛。工程规范、异步、类型注解都要过关"},
+    {k:"RAG + 向量库",        v:123, n:"已是门槛而非加分项 —— 见项目 P2"},
+    {k:"机器学习 / 深度学习",  v:92,  n:"面试八股基础，Transformer 必须讲透"},
+    {k:"大语言模型",          v:85,  n:"原理 + 选型 + 能力边界"},
+    {k:"LangChain / LangGraph",v:65, n:"编排框架，LangGraph 更被看重"},
+    {k:"提示工程",            v:58,  n:"正在被「上下文工程」取代，往后者靠"},
+    {k:"C++",                v:35,  n:"芯片/端侧/Infra 方向的分水岭"}
+  ];
+  var max = Math.max.apply(null, DATA.map(function(d){return d.v}));
+  var bars = document.getElementById('bars'), tbody = document.getElementById('tbody');
+  DATA.forEach(function(d){
+    var row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = '<div class="lab">'+d.k+'</div>' +
+      '<div class="track"><div class="bar" style="width:'+(d.v/max*72)+'%"></div>' +
+      '<span class="val">'+d.v+'</span>' +
+      '<span class="tip"><b>'+d.k+'</b> · '+d.v+' 次提及 — '+d.n+'</span></div>';
+    bars.appendChild(row);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+d.k+'</td><td class="num">'+d.v+'</td><td style="color:var(--ink2)">'+d.n+'</td>';
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>

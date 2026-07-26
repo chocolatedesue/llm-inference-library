@@ -44,6 +44,19 @@ window.CONTENT_ITEMS = [
     accent: 'green'
   },
   {
+    id: 'ai-job-projects-2026',
+    category: 'research',
+    type: '调研报告',
+    title: 'AI 求职项目调研',
+    subtitle: '应用/Agent + Infra · 2026 国内校招',
+    description: '面向国内应届的项目选题指南：应用/Agent 与 Infra 两条线的岗位门槛对比、6 个推荐项目（含必须做到的指标与面试高频追问）、6 周与 12 周路线，以及简历四要素的正反例。',
+    tags: ['AI 求职', '项目选题', '校招'],
+    href: 'content/research/ai-job-projects-2026.html',
+    action: '打开阅读',
+    updated: '2026-07-26',
+    accent: 'orange'
+  },
+  {
     id: 'open-source-llm-inference-shortlist',
     category: 'resources',
     type: '开源资源',
