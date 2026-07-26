@@ -10,6 +10,7 @@
 | 调研报告 | 细粒度 GPU 算力调度 | `/content/research/fine-grained-gpu-scheduling-survey.html` |
 | 开源资源 | 开源代码清单 | `/content/resources/open-source-llm-inference-shortlist.html` |
 | 演示文稿 | LLM 推理仿真实验平台 | `/downloads/llm-inference-simulation-platform-slides.pptx` |
+| 论文解构 | 12 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |
 
 下载目录中重复的 ` (1)` 文件与原件大小一致，因此未重复发布。
 

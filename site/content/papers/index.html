@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OCR + Agent 流水线生成的论文解构报告索引，含每篇的阶段耗时与 token 用量。">
+  <title>论文解构报告索引 · LLM 推理资料库</title>
+  <link rel="stylesheet" href="../../assets/site.css">
+  <style>
+    .run-table { width:100%; border-collapse:collapse; margin:28px 0 12px; font-size:14px; }
+    .run-table th, .run-table td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
+    .run-table th { color:var(--muted); font-size:12px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
+    .run-table td.num, .run-table th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .run-table tbody tr:hover { background:rgba(50,101,214,.04); }
+    .run-table a { color:var(--blue); font-weight:640; text-decoration:none; }
+    .run-table a:hover { text-decoration:underline; }
+    .table-wrap { overflow-x:auto; }
+    .pipeline-note { max-width:760px; color:#4b5668; }
+    .pipeline-note code { padding:1px 5px; border:1px solid var(--line); border-radius:5px; background:#fff; font-size:13px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-content">
+      <a class="brand" href="../../" aria-label="LLM 推理资料库首页">
+        <span class="brand-mark" aria-hidden="true">λ</span><span>LLM 推理资料库</span>
+      </a>
+      <p class="header-note">论文解构报告索引</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero shell">
+      <p class="eyebrow">PIPELINE OUTPUT / 2026</p>
+      <h1>12 篇论文的结构化解构报告</h1>
+      <p class="intro">每份报告都由同一条流水线生成：云端 OCR 转逐页 Markdown，再依次做全文分析、逐图视觉分析、报告合成与布局 DSL，最后由 Pandoc + Typst 编译成图左文右的紧凑 PDF。</p>
+      <div class="stat-row" aria-label="运行概览">
+        <div><strong>12</strong><span>已解构论文</span></div>
+        <div><strong>205</strong><span>OCR 页数</span></div>
+        <div><strong>94</strong><span>模型调用次数</span></div>
+      </div>
+    </section>
+
+    <section class="library shell">
+      <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2>每篇的运行账本</h2></div></div>
+      <p class="pipeline-note">下表数据全部读自各任务的 <code>usage.json</code>，不是估算值。缓存命中率为
+      <code>cache_read_input_tokens ÷ prompt tokens</code>。只收录阶段账本完整的运行——
+      账本缺阶段的任务说明它曾被并发处理，其耗时与 token 会低于真实开销。</p>
+      <div class="table-wrap">
+        <table class="run-table">
+          <thead><tr><th>论文</th><th class="num">OCR 页</th><th class="num">总耗时</th><th class="num">调用</th><th class="num">Prompt token</th><th class="num">缓存命中</th><th class="num">PDF</th></tr></thead>
+          <tbody>
+<tr><td><a href="../../downloads/attention-all-you-need.pdf">Attention Is All You Need</a></td><td class="num">15</td><td class="num">562s</td><td class="num">7</td><td class="num">1,348,260</td><td class="num">81%</td><td class="num">2117 KB</td></tr>
+<tr><td><a href="../../downloads/deep-residual-learning-image-recognition.pdf">Deep Residual Learning for Image Recognition</a></td><td class="num">12</td><td class="num">709s</td><td class="num">8</td><td class="num">1,471,793</td><td class="num">77%</td><td class="num">1416 KB</td></tr>
+<tr><td><a href="../../downloads/flexpipe.pdf">FlexPipe: Adapting Dynamic LLM Serving Through Inflight Pipeline Refactoring in Fragmented Serverless Clusters</a></td><td class="num">17</td><td class="num">330s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">1243 KB</td></tr>
+<tr><td><a href="../../downloads/gpemu.pdf">GPEmu: A GPU Emulator for Faster and Cheaper Prototyping and Evaluation of Deep Learning System Research</a></td><td class="num">14</td><td class="num">457s</td><td class="num">9</td><td class="num">0</td><td class="num">0%</td><td class="num">1167 KB</td></tr>
+<tr><td><a href="../../downloads/harnessing-power-llms-practice.pdf">Harnessing the Power of LLMs in Practice: A Survey on ChatGPT and Beyond</a></td><td class="num">20</td><td class="num">396s</td><td class="num">8</td><td class="num">0</td><td class="num">0%</td><td class="num">1269 KB</td></tr>
+<tr><td><a href="../../downloads/memocr.pdf">MemOCR: Layout-Aware Visual Memory for Efficient Long-Horizon Reasoning</a></td><td class="num">22</td><td class="num">261s</td><td class="num">14</td><td class="num">0</td><td class="num">0%</td><td class="num">579 KB</td></tr>
+<tr><td><a href="../../downloads/pipelive.pdf">PipeLive: Efficient Live In-place Pipeline Parallelism Reconfiguration for Dynamic LLM Serving</a></td><td class="num">23</td><td class="num">292s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">855 KB</td></tr>
+<tr><td><a href="../../downloads/realb.pdf">ReaLB: Real-Time Load Balancing for Multimodal MoE Inference</a></td><td class="num">19</td><td class="num">325s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">2341 KB</td></tr>
+<tr><td><a href="../../downloads/sarathi.pdf">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a></td><td class="num">18</td><td class="num">334s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">799 KB</td></tr>
+<tr><td><a href="../../downloads/servegen.pdf">ServeGen: Workload Characterization and Generation of Large Language Model Serving in Production</a></td><td class="num">16</td><td class="num">273s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">843 KB</td></tr>
+<tr><td><a href="../../downloads/torchfx.pdf">Torch.fx: Practical Program Capture and Transformation for Deep Learning in Python</a></td><td class="num">14</td><td class="num">291s</td><td class="num">6</td><td class="num">0</td><td class="num">0%</td><td class="num">546 KB</td></tr>
+<tr><td><a href="../../downloads/understanding-diffusion-model-serving-production.pdf">Understanding Diffusion Model Serving in Production: A Top-Down Analysis of Workload, Scheduling, and Resource Efficiency</a></td><td class="num">15</td><td class="num">292s</td><td class="num">7</td><td class="num">0</td><td class="num">0%</td><td class="num">922 KB</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><span>LLM 推理资料库</span><span>静态托管 · 无数据库 · 易于迁移</span></div>
+  </footer>
+</body>
+</html>
