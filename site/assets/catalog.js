@@ -57,18 +57,32 @@ window.CONTENT_ITEMS = [
     updated: '2026-07-26',
     accent: 'green'
   },
+  /* BEGIN generated: paper reports */
   {
     id: 'paper-analysis-index',
     category: 'papers',
     type: '运行账本',
     title: '论文解构报告索引',
-    subtitle: "12 篇 · 每阶段耗时与 token",
+    subtitle: "11 篇 · 每阶段耗时与 token",
     description: '一张表看完所有解构报告的 OCR 页数、总耗时、模型调用次数与缓存命中率，数据读自各任务的 usage.json。',
     tags: ['运行账本', '流水线', 'token 用量'],
     href: 'content/papers/index.html',
     action: '查看索引',
     updated: '2026-07-26',
     accent: 'violet'
+  },
+  {
+    id: 'image-worth-16x16-words',
+    category: 'papers',
+    type: '论文解构',
+    title: "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+    subtitle: "Alexey Dosovitskiy 等 · 预印本",
+    description: "虽然 Transformer 架构已成为自然语言处理任务事实上的标准，但其在计算机视觉领域的应用仍然有限。在视觉任务中，注意力机制要么与卷积网络结合使用，要么在保持卷积网络整体结构不变的情况下用于替换其部分组…",
+    tags: ['Vision Transformer', '图像分类', '自注意力机制'],
+    href: 'downloads/image-worth-16x16-words.pdf',
+    action: '打开 PDF',
+    updated: '2026-07-26',
+    accent: 'blue'
   },
   {
     id: 'attention-all-you-need',
@@ -81,7 +95,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/attention-all-you-need.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'blue'
+    accent: 'violet'
   },
   {
     id: 'deep-residual-learning-image-recognition',
@@ -94,7 +108,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/deep-residual-learning-image-recognition.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'violet'
+    accent: 'orange'
   },
   {
     id: 'flexpipe',
@@ -107,7 +121,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/flexpipe.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'orange'
+    accent: 'green'
   },
   {
     id: 'gpemu',
@@ -120,33 +134,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/gpemu.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'green'
-  },
-  {
-    id: 'harnessing-power-llms-practice',
-    category: 'papers',
-    type: '论文解构',
-    title: "Harnessing the Power of LLMs in Practice: A Survey on ChatGPT and Beyond",
-    subtitle: "Jingfeng Yang 等 · 2024",
-    description: "现代 LLM 服务不再是同构或单体的。目前的生产系统结合了分离式执行、复杂的并行性、运行时优化以及诸如推理、智能体和强化学习（RL）rollouts 等有状态的工作负载。模拟对于探索这一不断增长的设计空间非常…",
-    tags: ['LLM Inference', 'Discrete-event Simulation', 'Disaggregated Serving'],
-    href: 'downloads/harnessing-power-llms-practice.pdf',
-    action: '打开 PDF',
-    updated: '2026-07-26',
     accent: 'blue'
-  },
-  {
-    id: 'memocr',
-    category: 'papers',
-    type: '论文解构',
-    title: "MemOCR: Layout-Aware Visual Memory for Efficient Long-Horizon Reasoning",
-    subtitle: "Yaorui Shi 等 · 2026",
-    description: "长程智能体推理需要将不断增长的交互历史有效压缩到有限的上下文窗口中。大多数现有的记忆系统将历史初始化为文本，其 Token 级开销是均匀的，且随长度呈线性增长，这往往会将稀缺的预算消耗在低价值的细节上。为此，…",
-    tags: ['Visual Memory', 'Multimodal Agent', 'Long-Horizon Reasoning'],
-    href: 'downloads/memocr.pdf',
-    action: '打开 PDF',
-    updated: '2026-07-26',
-    accent: 'violet'
   },
   {
     id: 'pipelive',
@@ -159,7 +147,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/pipelive.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'orange'
+    accent: 'violet'
   },
   {
     id: 'realb',
@@ -172,7 +160,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/realb.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'green'
+    accent: 'orange'
   },
   {
     id: 'sarathi',
@@ -185,7 +173,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/sarathi.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'blue'
+    accent: 'green'
   },
   {
     id: 'servegen',
@@ -198,20 +186,20 @@ window.CONTENT_ITEMS = [
     href: 'downloads/servegen.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'violet'
+    accent: 'blue'
   },
   {
     id: 'torchfx',
     category: 'papers',
     type: '论文解构',
     title: "Torch.fx: Practical Program Capture and Transformation for Deep Learning in Python",
-    subtitle: "James K. Reed 等 · 2021",
-    description: "现代深度学习框架提供嵌入在 Python 中的命令式、动态（eager）执行编程接口，以提供高效的开发体验。然而，深度学习从业者有时需要捕获和转换程序结构，以进行性能优化、可视化、分析 and 硬件集成。我们…",
-    tags: ['PyTorch', 'torch.fx', '程序捕获'],
+    subtitle: "James K Reed 等 · 预印本",
+    description: "现代深度学习框架提供了嵌入在 Python 中的命令式、即时执行（eager execution）编程接口，以带来高效的开发体验。然而，深度学习从业者有时需要捕获并变换程序结构，以用于性能优化、可视化、分析和…",
+    tags: ['PyTorch', '程序捕获', '程序变换'],
     href: 'downloads/torchfx.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'orange'
+    accent: 'violet'
   },
   {
     id: 'understanding-diffusion-model-serving-production',
@@ -224,8 +212,9 @@ window.CONTENT_ITEMS = [
     href: 'downloads/understanding-diffusion-model-serving-production.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'green'
-  }
+    accent: 'orange'
+  },
+  /* END generated: paper reports */
 ];
 
 window.CONTENT_CATEGORIES = [
