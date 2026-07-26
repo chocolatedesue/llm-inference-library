@@ -1,0 +1,10 @@
+{
+  "name": "llm-inference-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static public library for LLM inference research materials.",
+  "scripts": {
+    "start": "python3 -m http.server 8000 --directory site",
+    "validate": "node scripts/validate.mjs"
+  }
+}

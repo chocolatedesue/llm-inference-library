@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分布式 LLM 推理并行化 · 调研报告 2024–2026</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --page:#f9f9f7;
+  --ink-1:#0b0b0b; --ink-2:#52514e; --ink-3:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-400:#3987e5; --seq-550:#1c5cab; --seq-700:#0d366b;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-1:#1a1a19; --page:#0d0d0d;
+  --ink-1:#ffffff; --ink-2:#c3c2b7; --ink-3:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --seq-100:#184f95; --seq-250:#1c5cab; --seq-400:#256abf; --seq-550:#3987e5; --seq-700:#86b6ef;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--page); color:var(--ink-1);
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 120px}
+header.hero{padding:64px 0 36px;border-bottom:1px solid var(--grid)}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.25;margin:0 0 12px;letter-spacing:-.02em}
+.sub{color:var(--ink-2);font-size:17px;max-width:76ch;margin:0}
+.meta{margin-top:20px;color:var(--ink-3);font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+h2{font-size:26px;margin:64px 0 6px;letter-spacing:-.01em;scroll-margin-top:70px}
+h2 .num{color:var(--ink-3);font-variant-numeric:tabular-nums;margin-right:12px;font-weight:400}
+h3{font-size:18px;margin:34px 0 8px}
+h4{font-size:15px;margin:20px 0 6px;color:var(--ink-1)}
+p{margin:10px 0}
+a{color:var(--s1);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+.lede{color:var(--ink-2);max-width:80ch}
+code{background:var(--surface-1);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.88em}
+
+nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--page) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--grid);margin-bottom:0}
+nav.toc .inner{max-width:1180px;margin:0 auto;padding:9px 24px;display:flex;gap:6px;overflow-x:auto;align-items:center}
+nav.toc a{font-size:12.5px;color:var(--ink-2);white-space:nowrap;padding:4px 9px;border-radius:6px;border:none}
+nav.toc a:hover{background:var(--surface-1);color:var(--ink-1)}
+.theme-btn{margin-left:auto;flex:none;font-size:12px;color:var(--ink-2);background:var(--surface-1);
+  border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:18px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.tile .k{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:2px 0 4px}
+.tile .d{font-size:13px;color:var(--ink-2);line-height:1.5}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+th{text-align:left;font-weight:600;color:var(--ink-2);font-size:12px;text-transform:uppercase;
+  letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--axis);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--grid);vertical-align:top;line-height:1.6}
+tr:hover td{background:color-mix(in srgb,var(--surface-1) 70%,var(--grid))}
+.tblwrap{overflow-x:auto;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:4px 14px 10px}
+#ptable{min-width:940px;table-layout:fixed}
+#ptable td:nth-child(3),#ptable td:nth-child(2){white-space:normal !important}
+#ptable td:last-child{line-height:1.9}
+#ptable td:last-child .chip{font-size:10.5px;padding:1px 7px}
+
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:2px 8px;border-radius:20px;
+  border:1px solid var(--border);color:var(--ink-2);background:var(--surface-1);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}.c4{background:var(--s4)}
+.c5{background:var(--s5)}.c6{background:var(--s6)}.c7{background:var(--s7)}.c8{background:var(--s8)}
+
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 6px;align-items:center}
+.filters button{font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface-1);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.filters button[aria-pressed="true"]{background:var(--ink-1);color:var(--page);border-color:var(--ink-1)}
+.filters button[aria-pressed="true"] .dot{outline:1.5px solid var(--page)}
+.count{font-size:12.5px;color:var(--ink-3);margin-left:4px;font-variant-numeric:tabular-nums}
+
+/* 并行轴 × 特性 矩阵 */
+.matrix{width:100%;border-collapse:separate;border-spacing:2px;font-size:12.5px}
+.matrix th{padding:6px 8px;border:none;font-size:11px;line-height:1.35;white-space:normal}
+.matrix th.rowh{text-align:left;width:150px;color:var(--ink-1);font-size:12.5px;text-transform:none;letter-spacing:0;font-weight:600}
+.matrix td{border:none;padding:0}
+.cell{border-radius:6px;padding:7px 8px;font-size:11.5px;line-height:1.4;min-height:44px;color:#fff;
+  display:flex;align-items:center;justify-content:center;text-align:center}
+.lv3{background:var(--seq-700)}.lv2{background:var(--seq-550)}
+.lv1{background:var(--seq-250);color:var(--ink-1)}.lv0{background:var(--grid);color:var(--ink-2)}
+:root[data-theme="dark"] .lv1{color:#fff}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-2);margin-top:10px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block;vertical-align:-2px;margin-right:5px}
+
+/* timeline */
+.tl{position:relative;margin:24px 0 8px;padding-left:26px}
+.tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--grid)}
+.tl-item{position:relative;margin-bottom:22px}
+.tl-item:before{content:"";position:absolute;left:-23px;top:7px;width:10px;height:10px;border-radius:50%;
+  background:var(--s1);outline:3px solid var(--page)}
+.tl-item .yr{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.tl-item .ti{font-weight:600;font-size:15.5px;margin:1px 0 3px}
+.tl-item .tx{color:var(--ink-2);font-size:13.5px;max-width:78ch}
+
+.gap{border-left:3px solid var(--s2);padding:2px 0 2px 16px;margin:22px 0}
+.gap .gh{font-weight:600;font-size:16px;margin-bottom:2px}
+.gap .why{color:var(--ink-2);font-size:13.5px}
+.gap .how{font-size:13.5px;margin-top:6px;background:var(--surface-1);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px}
+.gap .how b{font-weight:600}
+
+.note{background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--warn);
+  border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13.5px;color:var(--ink-2)}
+.note b{color:var(--ink-1)}
+.ok{border-left-color:var(--good)}
+.bad{border-left-color:var(--crit)}
+
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin:5px 0;color:var(--ink-2)}
+li b,li strong{color:var(--ink-1)}
+.small{font-size:12.5px;color:var(--ink-3)}
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--grid);color:var(--ink-3);font-size:12.5px}
+@media (max-width:640px){
+  .matrix th.rowh{width:96px;font-size:11px}
+  .cell{font-size:10.5px;padding:5px 4px}
+}
+</style>
+</head>
+<body>
+
+<nav class="toc"><div class="inner">
+  <a href="#s1">全景</a>
+  <a href="#s2">并行轴</a>
+  <a href="#s3">范式演进</a>
+  <a href="#s4">论文库</a>
+  <a href="#s5">研究 Gap</a>
+  <a href="#s6">实验平台</a>
+  <a href="#s7">方法论</a>
+  <a href="#s8">行动清单</a>
+  <button class="theme-btn" id="themeBtn">切换深色</button>
+</div></nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <h1>分布式 LLM 推理的并行化<br>设计空间、前沿论文与实验平台</h1>
+  <p class="sub">面向「选题找 gap + 搭实验平台」的调研报告。覆盖 2024 – 2026 年 OSDI / SOSP / NSDI / EuroSys / ASPLOS / MLSys / SIGCOMM / ISCA / FAST 的分布式推理系统工作，并给出 2–8 节点小集群下可执行的实验平台配方。</p>
+  <div class="meta">
+    <span>调研日期 2026-07-26</span><span>约 90 篇系统论文</span><span>假设资源：2–8 节点 GPU 小集群</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1"><span class="num">01</span>一句话全景</h2>
+<p class="lede">如果只记一句话：<b>推理的并行化正在从「对整个模型选一种并行方式」，走向「按算子的计算/访存特征、按请求的阶段、按运行时负载，逐块地选择并切换并行方式」。</b>过去两年几乎所有重要工作都是这条主线的分支。</p>
+
+<div class="grid3" style="margin-top:20px">
+  <div class="tile"><div class="k">主线一</div><div class="v">解耦</div><div class="d">阶段解耦（Prefill/Decode）→ 模块解耦（Attention/FFN）→ 角色解耦（Rollout/Train）。粒度越切越细。</div></div>
+  <div class="tile"><div class="k">主线二</div><div class="v">KV 上位</div><div class="d">KV cache 从「显存里的中间结果」变成独立于权重的<b>第二调度对象</b>：可分片、可池化、可跨机迁移、可跨模型复用。</div></div>
+  <div class="tile"><div class="k">主线三</div><div class="v">动态化</div><div class="d">弹性序列并行、动态 EP 伸缩、在线专家重映射 —— 并行度本身成为运行时可调的变量。</div></div>
+</div>
+
+<div class="note"><b>给你的直接结论：</b>纯粹「提出一种新并行切法」的论文窗口已经很窄（TP/PP/CP/EP 的静态组合已被吃透）。2026 年真正有空间的是三类：<b>(a)</b> 并行策略的<b>自动搜索与在线自适应</b>；<b>(b)</b> 并行策略与 <b>KV cache 生命周期</b>的联合设计；<b>(c)</b> <b>Agentic / RL rollout</b> 这类新负载下的并行与调度。第 5 节给出 7 个具体 gap。</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="num">02</span>并行轴：设计空间与它们各自的痛点</h2>
+<p class="lede">推理与训练的根本差异决定了并行策略的取舍：训练是吞吐导向的大 batch、无延迟约束、配置一次跑到底；推理则分成 <b>prefill（compute-bound）</b> 与 <b>decode（memory-bound，瓶颈在 KV 带宽）</b>，还要满足 TTFT / TPOT 的 SLO。下表按四个关键维度评估六条并行轴。</p>
+
+<div class="card">
+<table class="matrix">
+  <thead><tr>
+    <th class="rowh">并行轴</th>
+    <th>通信开销<br>（越深越重）</th>
+    <th>降低单请求<br>延迟能力</th>
+    <th>显存/KV<br>扩展能力</th>
+    <th>运行时<br>动态调整难度</th>
+  </tr></thead>
+  <tbody>
+    <tr><th class="rowh">Tensor Parallel (TP)</th>
+      <td><div class="cell lv3">每层 all-reduce<br>&gt;8 卡收益递减</div></td>
+      <td><div class="cell lv3">最强</div></td>
+      <td><div class="cell lv2">权重与 KV 均分</div></td>
+      <td><div class="cell lv3">极难<br>需重切权重</div></td></tr>
+    <tr><th class="rowh">Pipeline Parallel (PP)</th>
+      <td><div class="cell lv1">仅层间激活<br>跨节点友好</div></td>
+      <td><div class="cell lv0">差<br>有 bubble</div></td>
+      <td><div class="cell lv2">按层扩展</div></td>
+      <td><div class="cell lv2">中等</div></td></tr>
+    <tr><th class="rowh">Context / Sequence (CP)</th>
+      <td><div class="cell lv2">ring / all-to-all<br>随序列长度增长</div></td>
+      <td><div class="cell lv2">长 prefill 强</div></td>
+      <td><div class="cell lv3">最强<br>百万 token</div></td>
+      <td><div class="cell lv1">较易<br>见 LoongServe</div></td></tr>
+    <tr><th class="rowh">Expert Parallel (EP)</th>
+      <td><div class="cell lv3">all-to-all<br>且负载不均</div></td>
+      <td><div class="cell lv1">中等</div></td>
+      <td><div class="cell lv3">MoE 唯一解</div></td>
+      <td><div class="cell lv2">中等<br>可热迁专家</div></td></tr>
+    <tr><th class="rowh">Data / Attention-DP</th>
+      <td><div class="cell lv0">几乎无</div></td>
+      <td><div class="cell lv0">不降低</div></td>
+      <td><div class="cell lv0">权重需复制</div></td>
+      <td><div class="cell lv1">易</div></td></tr>
+    <tr><th class="rowh">P/D 解耦（阶段并行）</th>
+      <td><div class="cell lv2">跨机 KV 传输<br>是新瓶颈</div></td>
+      <td><div class="cell lv3">两阶段各自<br>调优 SLO</div></td>
+      <td><div class="cell lv2">资源池化</div></td>
+      <td><div class="cell lv2">中等<br>需重路由</div></td></tr>
+  </tbody>
+</table>
+<div class="legend-row">
+  <span><i class="sw" style="background:var(--seq-700)"></i>高 / 强</span>
+  <span><i class="sw" style="background:var(--seq-550)"></i>中高</span>
+  <span><i class="sw" style="background:var(--seq-250)"></i>中低</span>
+  <span><i class="sw" style="background:var(--grid)"></i>低 / 无</span>
+  <span class="small">定性评估，基于各轴的公开实测报告与论文分析；非精确测量。</span>
+</div>
+</div>
+
+<div class="grid2">
+<div class="card">
+<h3 style="margin-top:0">六条轴的当代组合范式</h3>
+<ul>
+<li><b>Attention-DP + MoE-EP</b> — DeepSeek-V3/R1 的主流做法。MLA 让 KV 很小，attention 部分直接数据并行复制以规避 TP 通信；FFN 用大规模跨节点 EP 承担主要通信。<a href="https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md">推理系统说明</a></li>
+<li><b>KV-Parallel（attention 阶段）+ TP/EP（FFN 阶段）动态切换</b> — NVIDIA <b>Helix Parallelism</b>（<a href="https://arxiv.org/abs/2507.07120">arXiv:2507.07120</a>，2025-07）。同一批 GPU 在一次 forward 内切换角色，用 batchwise overlap 掩盖切换通信。这是「按阶段换并行」最激进的一版。</li>
+<li><b>Attention/FFN 模块级解耦</b> — MegaScale-Infer（SIGCOMM'25，字节）与 Adrenaline（AFD）。把 attention（访存密集）与 expert（计算密集）拆成两个独立伸缩的服务单元，ping-pong 流水掩盖 all-to-all。</li>
+<li><b>弹性序列并行</b> — LoongServe（SOSP'24，北大）按请求实时调整 SP 度，解决长上下文与 decode 混跑的碎片化。</li>
+</ul>
+</div>
+<div class="card">
+<h3 style="margin-top:0">同名不同物：两个 "Helix" 一定要分清</h3>
+<p style="color:var(--ink-2);font-size:13.5px">写 related work 时最容易踩的坑之一：</p>
+<ul>
+<li><b>Helix</b>（CMU，<b>ASPLOS 2025</b>）— <i>Serving LLMs over Heterogeneous GPUs and Network via Max-Flow</i>。把<b>异构 GPU + 异构网络</b>下的模型切分与请求路由建模成最大流问题。<a href="https://arxiv.org/abs/2406.01566">arXiv:2406.01566</a></li>
+<li><b>Helix Parallelism</b>（NVIDIA，<b>2025-07 arXiv</b>）— <i>Rethinking Sharding Strategies for Interactive Multi-Million-Token LLM Decoding</i>。<b>KV 分片 + 阶段切换并行</b>，与前者完全无关。<a href="https://arxiv.org/abs/2507.07120">arXiv:2507.07120</a>（vLLM 已有 <a href="https://github.com/vllm-project/vllm/issues/34018">RFC #34018</a> 在跟进）</li>
+</ul>
+<p class="small">类似的还有 <b>DCP</b>（Dynamic Context Parallelism, SOSP'25）与各种 "Context Parallelism"，注意区分训练侧与推理侧。</p>
+</div>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="num">03</span>范式演进：一条时间线</h2>
+<div class="tl">
+  <div class="tl-item"><div class="yr">2022 – 2023</div><div class="ti">吞吐时代：连续批处理 + 分页显存</div>
+    <div class="tx">Orca 的 iteration-level batching、vLLM 的 PagedAttention 把「怎么把 GPU 喂饱」解决掉。并行仍是训练搬过来的静态 TP/PP。Petals 开辟去中心化推理，AlpaServe 开始做多模型放置搜索。</div></div>
+  <div class="tl-item"><div class="yr">2024</div><div class="ti">阶段解耦元年：Goodput 取代 Throughput</div>
+    <div class="tx"><b>DistServe</b>（OSDI'24）与 <b>Splitwise</b>（ISCA'24）确立 prefill/decode 分离；DistServe 同时把评价指标从吞吐改成 <b>goodput（SLO 达标前提下的吞吐）</b>，这一框架现在是审稿人的标准检验点。<b>Sarathi-Serve</b> 的 chunked prefill 成为所有生产框架的默认调度原型。<b>Vidur</b>（MLSys'24）让并行配置搜索可以在 CPU 上做。</div></div>
+  <div class="tl-item"><div class="yr">2025</div><div class="ti">工业级落地 + KV 成为一等公民</div>
+    <div class="tx"><b>Mooncake</b>（FAST'25，Kimi 生产系统）把 KV cache 池提升为架构核心并开源；DeepSeek 公开 96×H100 的大规模 EP 部署与 DeepEP / EPLB；<b>MegaScale-Infer</b>（SIGCOMM'25）把解耦下推到 Attention/FFN 模块级；<b>WaferLLM</b>（OSDI'25）把并行搬到晶圆级网格；<b>Aegaeon</b>（SOSP'25，北大+阿里云）做 token 级 GPU 池化。同时 <b>PrefillOnly</b>（SOSP'25）指出 RAG/Agent 场景大量请求根本不需要 decode。</div></div>
+  <div class="tl-item"><div class="yr">2026</div><div class="ti">重心转向 Agentic / RL 基础设施，以及解耦的「再统一」</div>
+    <div class="tx">OSDI'26 里 RL post-training 基础设施独占 6 篇（RollArt / Weave / RLinf / DynaRL / Seer / RobustRL），核心矛盾变成 <b>rollout 与 training 两类异构负载如何解耦、协同与容错</b>——即 P/D 解耦思想的迁移。同时出现反思：<b>Revisiting Pipeline Parallelism for LLM Serving</b>（OSDI'26）重审 PP 在推理侧的适用性；多篇工作质疑纯 P/D 分离在负载抖动下的僵化，转向可切分的混合架构。</div></div>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="num">04</span>论文库：按主题筛选</h2>
+<p class="lede">下表是本次调研筛出的核心系统论文。点击标签过滤。<b>Venue 一列的置信度</b>：已在官方 accepted list / USENIX / ACM DL 交叉核验的标为确认；仅从三方 tracker 得到的标 <span style="color:var(--warn)">⚠</span>，引用前请自行复核。</p>
+
+<div class="filters" id="filters"></div>
+<div class="tblwrap">
+<table id="ptable">
+  <colgroup><col style="width:24%"><col style="width:9%"><col style="width:13%"><col style="width:36%"><col style="width:18%"></colgroup>
+  <thead><tr><th>论文</th><th>Venue</th><th>机构</th><th>并行 / 分布式思路</th><th>主题</th></tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+<p class="small" id="tcount"></p>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="num">05</span>七个可攻的研究 Gap</h2>
+<p class="lede">按「和你 2–8 节点资源的匹配度」排序：越靠前，越是小集群能做出可信结果的题目。每条都给了 gap 是什么、为什么还没被解决、以及在你的资源下怎么做实验。</p>
+
+<div class="gap">
+<div class="gh">Gap 1 · 推理侧缺一个 Alpa —— 联合搜索 TP/PP/CP/EP/解耦粒度的自动并行框架</div>
+<div class="why">训练侧有 Alpa 的成熟自动并行搜索，推理侧到今天仍然是「Vidur 模拟器 + 人工经验规则」。Helix Parallelism 这类「一次 forward 内按阶段换并行」的设计出现后，搜索空间进一步爆炸：并行度 × 阶段划分 × 解耦粒度 × 请求路由，且目标函数是 goodput（含 SLO 约束）而非吞吐，是个带约束的组合优化，不是简单的 cost model 最小化。</div>
+<div class="how"><b>小集群怎么做：</b>这是最适合 2–8 节点的题目。用 <b>Vidur</b>（误差 &lt;9%）在 CPU 上跑搜索，把真实集群仅用于<b>验证搜索出的 Top-K 配置</b>——这正是 Vidur 自己的方法论（1 CPU-hour 替代 42K GPU-hours）。可信度的关键是：报告「模拟器预测 vs 实测」的误差曲线。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 2 · 解耦架构的「再统一」：什么时候该分、分多细</div>
+<div class="why">2025–2026 已有多篇（DynaServe 的 micro-request、Prefill-Decode Aggregation or Disaggregation、Prefill-Decode Multiplexing）指出纯 P/D 分离在流量抖动、小请求、异构硬件下反而变差，但<b>目前没有统一的判据</b>说明在给定负载分布与硬件拓扑下应该选哪种形态。这是一个「理论 + 系统」都还空着的位置。</div>
+<div class="how"><b>小集群怎么做：</b>2 节点即可复现分离/合并两种形态（vLLM KVConnector 或 Mooncake Transfer Engine）。用 <b>ServeGen</b> 生成不同 burstiness / 长度分布的负载做 sweep，画出「负载特征 → 最优形态」的相图（phase diagram）。相图本身就是贡献。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 3 · MoE 负载均衡的指标之争尚未收敛</div>
+<div class="why">主流 EPLB 类方法均衡的是<b>每卡 token 数</b>；METRO（2025，NVIDIA）指出在 memory-bound 的 decode 阶段应该均衡<b>每卡激活专家数</b>，DeepSeek-V3/Qwen3 上能降 11–22% decode 延迟。而 MLSys'26 的 <i>On the Diminishing Returns of Expert Load Balancing in MoE LLM Serving</i> 又反过来质疑负载均衡本身的边际收益。三种立场并存，说明<b>「什么才是 EP 的正确均衡目标」还没有定论</b>。</div>
+<div class="how"><b>小集群怎么做：</b>8 卡单节点即可跑 DeepSeek-V2-Lite / Qwen3-MoE 级别模型的 EP 实验；用 SGLang 或 ktransformers 做基线，profile 出「token 数 / 激活专家数 / all-to-all 时间」三者的实测关系。这题不需要 671B。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 4 · 长上下文下 KV 分片与「投机解码 / 前缀共享」的不兼容</div>
+<div class="why">CP / KV-parallel 把 KV cache 跨 GPU 分片之后，<b>投机解码的树形验证</b>与<b>跨请求前缀共享（RadixAttention 类）</b>都会失效或代价陡增——两者都假设 KV 在单一位置可随机访问。这个交叉点在文献里几乎是空白，而它恰恰是「长 CoT 推理 + 多分支采样」这个最热负载的核心矛盾。</div>
+<div class="how"><b>小集群怎么做：</b>SGLang（RadixAttention 原生）+ 2 节点 CP，量化「分片度 ↑ → 前缀命中收益 ↓」的曲线，是很干净的 measurement study，也是好论文的第一节。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 5 · Agentic / RL rollout 负载下的并行策略几乎没人系统研究</div>
+<div class="why">这是 2026 年增长最快的方向（OSDI'26 六篇 RL infra + NSDI'26 的 Autellix/Agentix）。但现有工作大多在<b>调度层</b>（rollout/train 解耦、tail batching、长尾预测），<b>并行策略层几乎无人涉足</b>：rollout 阶段的最优并行配置与 serving 阶段是否相同？训练与 rollout 共置时权重要不要重切？RL 的同步屏障如何影响并行度选择？公开 agentic trace 也刚刚才有（TraceLab, 2026）。</div>
+<div class="how"><b>小集群怎么做：</b>这是「新负载 + 老方法」的典型机会窗口。用 verl / RLinf 类框架在 2–4 节点跑小模型 GRPO，测 rollout 阶段的并行敏感度即可出结论。风险：方向拥挤，出手要快。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 6 · 解耦/并行架构的容错与弹性被严重低估</div>
+<div class="why">DéjàVu（ICML'24）之后，P/D 分离下的<b>故障恢复</b>基本无人跟进；OSDI'26 的 RobustRL 做了 RL 侧的角色感知容错，但推理服务侧仍然是空的。当 KV cache 池、prefill 集群、decode 集群、专家副本各自独立伸缩后，「一个 decode 节点挂了，正在生成的请求怎么办」没有标准答案。2026 年的 KV 管理综述也把<b>容错</b>列为七个评测空白之一。</div>
+<div class="how"><b>小集群怎么做：</b>容错实验恰恰<b>不需要大集群</b>——4 节点注入故障即可。而且这类工作对 baseline 的性能对比要求低（因为大家都没做），审稿风险相对小。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap 7 · 评测方法本身：现有 benchmark 系统性低估了难度</div>
+<div class="why">ServeGen（NSDI'26，阿里 35.4 亿请求）用生产数据证明：<b>ShareGPT + 人工 Poisson 的经典做法会让容量规划低估 50%</b>；输入输出长度相关性极弱（推翻先前假设）；到达过程无法用单一分布拟合。这意味着<b>过去两年大量论文的实验结论可能在真实负载下不成立</b>。系统性地重测经典系统，本身就是一篇有价值的 measurement paper。</div>
+<div class="how"><b>小集群怎么做：</b>纯软件工作，2 节点足够。拿 DistServe / vLLM / SGLang 在 ServeGen + Mooncake + BurstGPT 三套真实 trace 下重测，与原论文的合成负载结论对比。这是最低风险、最高确定性的一篇。</div>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="num">06</span>实验平台：怎么搭</h2>
+<p class="lede">实验平台分三层：<b>软件基线</b>（在谁身上改）、<b>模拟器</b>（把小集群外推到大规模）、<b>负载与指标</b>（结论是否可信）。对 2–8 节点资源，正确的策略不是「买更多卡」，而是 <b>小集群实测 + 校准过的模拟器外推</b> —— 这正是 SimAI 论文自身的验证方式。</p>
+
+<h3>6.1 软件基线：在谁身上改</h3>
+<div class="tblwrap">
+<table>
+<thead><tr><th>项目</th><th>状态（2026-07）</th><th>研究可插拔点</th><th>适合做什么研究</th></tr></thead>
+<tbody>
+<tr><td><b><a href="https://docs.vllm.ai/">vLLM</a></b><br><span class="small">v0.26.x，近乎每日更新</span></td><td>V1 引擎：scheduler / worker 进程解耦，调度抽象简化为 token 预算</td><td><code>KVConnector</code> API（接 Mooncake/LMCache/NIXL）；继承 <code>Scheduler</code> 改策略；<code>elastic_ep</code> 插件</td><td><b>首选通用基线。</b>P/D 分离、KV 迁移、调度策略。社区大，reviewer 认可度高</td></tr>
+<tr><td><b><a href="https://github.com/sgl-project/sglang">SGLang</a></b><br><span class="small">v0.5.x，活跃</span></td><td>RadixAttention 前缀树；调度逻辑纯 Python</td><td>直接改 <code>schedule_batch.py</code> / <code>scheduler.py</code></td><td><b>新 batching / 调度策略、前缀共享、MoE EP</b>。改起来最快</td></tr>
+<tr><td><b><a href="https://kvcache-ai.github.io/Mooncake/">Mooncake</a></b><br><span class="small">v0.3.x</span></td><td>KV 为中心的分离式底座；Transfer Engine 支持 RDMA/NVLink/TCP（实测 4×200Gbps RoCE 达 87 GB/s）</td><td>Transfer Engine 之上扩展；自带 Kimi 生产 trace</td><td><b>跨节点 KV 迁移、P/D 分离的最佳底座</b>。已被 vLLM/SGLang/LMDeploy 集成</td></tr>
+<tr><td><b><a href="https://llm-d.ai/">llm-d</a></b> / <b><a href="https://www.nvidia.com/en-us/ai/dynamo/">Dynamo</a></b></td><td>llm-d 为 K8s 原生编排；Dynamo 1.0 为跨引擎编排层（NIXL 做 KV 传输）</td><td>Inference Gateway / planner / router 层</td><td><b>集群级路由、自动扩缩容、KV-aware routing</b>。不适合改引擎内核</td></tr>
+<tr><td><b><a href="https://github.com/kvcache-ai/ktransformers">ktransformers</a></b><br><span class="small">SOSP'25</span></td><td>CPU/GPU 异构混合，冷专家放 CPU 内存</td><td>专家放置与 offloading 策略</td><td><b>显存受限下跑超大 MoE</b>（单机跑 671B 级），异构 offloading 研究</td></tr>
+<tr><td><b>TensorRT-LLM</b></td><td>PyTorch backend 为默认；支持 disagg serving、wide-EP</td><td>可改性最弱</td><td>只在需要「对齐 NVIDIA 官方数字」时用</td></tr>
+<tr><td><b>DeepSpeed-MII</b></td><td style="color:var(--crit)">v0.3.3 停留在 2025-03，超一年未更新</td><td>—</td><td><b>不建议</b>作为 2026 年新研究基线</td></tr>
+</tbody></table>
+</div>
+
+<h3>6.2 模拟器：小集群的杠杆</h3>
+<div class="tblwrap">
+<table>
+<thead><tr><th>模拟器</th><th>建模范围</th><th>已报告保真度</th><th>局限</th></tr></thead>
+<tbody>
+<tr><td><b><a href="https://github.com/microsoft/vidur">Vidur</a></b><br><span class="small">MLSys'24, Microsoft</span></td><td>算子级 profiling + 预测模型；支持 TP/PP、batching、调度策略搜索</td><td><b>误差 &lt;9%</b>；Vidur-Search 1 CPU-hour 找到 LLaMA2-70B 最优配置（真实探索需 42K GPU-hours ≈ $218K）</td><td>网络细节与 MoE 支持程度原文未明确；需自行确认或扩展</td></tr>
+<tr><td><b><a href="https://github.com/casys-kaist/LLMServingSim">LLMServingSim 2.0</a></b><br><span class="small">KAIST</span></td><td>迭代级 HW/SW 协同仿真，可插拔加速器后端；2.0 扩展到<b>异构与分离式</b>基础设施</td><td>误差 <b>&lt;14.7%</b>；比加速器模拟器快 91.5×</td><td>KV / MoE 建模细节需查源码</td></tr>
+<tr><td><b><a href="https://github.com/aliyun/SimAI">SimAI</a></b><br><span class="small">NSDI'25, 阿里</span></td><td>全栈集群仿真：SimCCL 拦截 NCCL 做集合通信仿真，RoCEv2 多轨 fat-tree</td><td>节点内通信偏差 <b>A100 3.9% / H100 2.3%</b>；<b>1024 GPU 端到端偏差 &lt;4%</b></td><td>不支持自适应路由 / IB SHArP；<b>EP 假设 token 均衡分布</b>（非真实 gating）——这本身就是个 gap</td></tr>
+<tr><td><b><a href="https://github.com/astra-sim/astra-sim">ASTRA-sim 2.0</a></b></td><td>分层网络 + 分离式系统建模，训练导向</td><td>被 SimAI 测得节点间偏差高达 <b>74.8%(A100) / 51.7%(H100)</b></td><td><b>不适合直接做推理研究</b>；一般只作为网络仿真后端复用</td></tr>
+<tr><td><b><a href="https://github.com/Mutinifni/splitwise-sim">Splitwise-sim</a></b> / <b><a href="https://github.com/Thesys-lab/Helix-ASPLOS25">Helix</a></b></td><td>离散事件集群模拟；异构 GPU 池 / max-flow 放置</td><td>—</td><td>功能基础，适合当 fork 起点</td></tr>
+<tr><td><b>GenZ / LLM-Viewer</b></td><td>roofline 解析计算器</td><td>无排队动态</td><td>只做「信封估算」，不能替代仿真</td></tr>
+</tbody></table>
+</div>
+<div class="note ok"><b>推荐用法（关键）：</b>不要把模拟器当成「没卡时的替代品」，要当成<b>放大器</b>：① 在 2–8 节点上实测，用 Nsight Systems + <a href="https://github.com/NVIDIA/nccl-tests">nccl-tests</a> + nvbandwidth 标定模拟器参数；② 报告「模拟 vs 实测」的误差；③ 再用标定后的模拟器外推到 128/512/1024 GPU。这个「校准 + 外推」的方法论本身就能挡掉一大半「你没有大集群」的审稿质疑。</div>
+
+<h3>6.3 负载与 Trace：结论可信度的命门</h3>
+<div class="grid2">
+<div class="card">
+<h4 style="margin-top:0">该用的</h4>
+<ul>
+<li><b><a href="https://github.com/alibaba/ServeGen">ServeGen</a></b>（NSDI'26，阿里，<a href="https://arxiv.org/abs/2505.09999">arXiv:2505.09999</a>）— 2025 年 1–4 月、<b>35.4 亿请求、12 个模型、约万级 GPU</b> 的生产数据。<b>2026 年做 LLM serving 实验的首选负载生成器。</b></li>
+<li><b>Mooncake trace</b>（2025-02）— Kimi 真实生产 trace，含时间戳与 <b>cache 命中率（最高 50%）</b>，研究 KV 复用必备。</li>
+<li><b><a href="https://github.com/Azure/AzurePublicDataset">Azure LLM Inference Trace 2023/2024</a></b> — 最广泛使用的基线 trace，DistServe/Sarathi/Vidur 标配，必须包含以便和已有工作对齐。</li>
+<li><b><a href="https://github.com/HPMLL/BurstGPT">BurstGPT</a></b> — 529 万真实 ChatGPT 请求、4+ 个月，突出流量突发性。</li>
+<li><b>TraceLab</b>（<a href="https://arxiv.org/abs/2606.30560">arXiv:2606.30560</a>, 2026）— 少见的公开 <b>coding agent</b> 工作负载 trace。做 agentic 方向必看。<span class="small">（2026 新作，建议复核）</span></li>
+</ul>
+</div>
+<div class="card">
+<h4 style="margin-top:0">该停用的</h4>
+<p style="font-size:13.5px;color:var(--ink-2)">ShareGPT / LMSYS-Chat-1M <b>+ 人工叠加 Poisson 到达</b>（即 vLLM <code>benchmark_serving.py</code> 的默认做法）——ServeGen 已用生产数据证明这套组合生成的负载<b>显著比真实流量更「好服务」，会导致容量规划低估 50%</b>。</p>
+<p style="font-size:13.5px;color:var(--ink-2)">具体反直觉发现：<b>①</b> 到达过程无法用单一 Gamma/Weibull/Exponential 拟合；<b>②</b> 输入长度是 Pareto+对数正态混合、输出是指数分布，且<b>输入输出长度相关性很弱</b>；<b>③</b> 2412 个客户中 29 个贡献 90% 流量；<b>④</b> reasoning 负载呈 bimodal 的思考/答案长度分布。</p>
+<p class="small">建议：仍然报告 ShareGPT 结果以便与旧论文对齐，但把 ServeGen / 真实 trace 作为<b>主结果</b>。</p>
+</div>
+</div>
+
+<h3>6.4 硬件与获取</h3>
+<div class="grid2">
+<div class="card">
+<h4 style="margin-top:0">互联层级（决定你能做哪类实验）</h4>
+<p style="font-size:13.5px;color:var(--ink-2)">NVLink（节点内）&gt; PCIe &gt; RDMA/InfiniBand（节点间低延迟）&gt; RoCE/以太网。<b>做 P/D 分离与跨节点 KV 迁移，节点间必须有 RDMA/IB 或至少 RoCE</b>，纯 TCP 的结果没有说服力（Mooncake 实测 8×400Gbps RoCE 才到 190 GB/s）。租云时务必确认 SKU 含 InfiniBand。</p>
+<h4>学术界低成本渠道</h4>
+<ul>
+<li><b><a href="https://chameleoncloud.org/">Chameleon Cloud</a></b>（NSF）— 2025-06 起 TACC KVM 站点已上 H100</li>
+<li><b><a href="https://cloudlab.us/">CloudLab</a></b>（NSF）— 网络拓扑可控，GPU 节点较少，但做<b>网络相关</b>实验独一档</li>
+<li><b>NSF ACCESS</b> — Delta / Bridges-2 / Anvil 的多节点 A100/H100 + IB，免费但需提交 allocation proposal，有周期</li>
+</ul>
+</div>
+<div class="card">
+<h4 style="margin-top:0">商业租用参考（2025–2026，波动大，务必自行复核）</h4>
+<table style="margin-top:4px">
+<thead><tr><th>Provider</th><th>H100 $/GPU·hr</th><th>备注</th></tr></thead>
+<tbody>
+<tr><td>Vast.ai</td><td>1.49 – 1.87</td><td>市场型现货，无 SLA</td></tr>
+<tr><td>RunPod</td><td>1.99 / 2.89</td><td>Community / Secure</td></tr>
+<tr><td>Lambda</td><td>~2.99</td><td>8×H100 含 InfiniBand</td></tr>
+<tr><td>CoreWeave</td><td>~6.16</td><td>8×H100 HGX + IB，企业级</td></tr>
+<tr><td>Azure / Oracle</td><td>6.98 / 10.00</td><td>大厂溢价；Oracle 整机 8 卡起</td></tr>
+</tbody></table>
+<p class="small" style="margin-top:8px">策略：<b>探索阶段用现货（Vast/RunPod）</b>，跑通脚本与调参；<b>出正式数据时切到有 IB + SLA 的节点</b>（Lambda/CoreWeave）连续跑完，避免混用不同拓扑的数据。</p>
+</div>
+</div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="num">07</span>方法论：审稿人会怎么打你</h2>
+<div class="grid2">
+<div class="card bad" style="border-left:3px solid var(--crit)">
+<h4 style="margin-top:0">七个高频批评点</h4>
+<ol>
+<li><b>只用 closed-loop 吞吐</b>（固定并发）掩盖 SLO 违反 —— 必须补 open-loop 到达过程。</li>
+<li><b>Coordinated omission</b> —— 测量客户端自身阻塞导致延迟分布失真，尾延迟被系统性低估。</li>
+<li><b>基线没调到最优</b> —— baseline 的 batch size / 并行度没扫参就对比，是最常见的 reject 理由。</li>
+<li><b>只报单一工作点</b> —— 必须给完整的 request-rate sweep 曲线（吞吐-延迟 / goodput-SLO Pareto）。</li>
+<li><b>不报方差</b> —— 多次运行的 variance 缺失。</li>
+<li><b>用静态数据集 + 人工 Poisson 冒充真实负载</b> —— 见 6.3。</li>
+<li><b>回避 goodput 框架</b>，只讲 tokens/s。</li>
+</ol>
+</div>
+<div class="card ok" style="border-left:3px solid var(--good)">
+<h4 style="margin-top:0">该报的指标</h4>
+<ul>
+<li><b>TTFT</b>（prefill 延迟）、<b>TPOT / ITL</b>（decode 每 token）、E2E，都要 P50/P95/P99。</li>
+<li><b>Goodput</b> — DistServe（OSDI'24）定义：满足 SLO（如 90% 请求达标）前提下每 GPU 的最大请求速率。<b>这是当代 serving 论文的默认主指标。</b></li>
+<li><b>Fairness</b> — VTC（OSDI'24）的 virtual token counter，多租户场景必备，<a href="https://github.com/Ying1123/VTC-artifact">有 artifact</a>。</li>
+<li><b>Cost-per-token / 能耗</b> — 异构与成本方向的必需项（可参考 vidur-energy fork）。</li>
+</ul>
+<h4>工具</h4>
+<p style="font-size:13.5px;color:var(--ink-2)"><code>vllm bench serve</code> / <code>vllm bench sweep serve</code> 做 rate sweep；NVIDIA GenAI-Perf 已演进为独立项目 <b><a href="https://github.com/ai-dynamo/aiperf">AIPerf</a></b>（2026 仍活跃迭代）。优先用标准化生成器而非自制脚本。</p>
+</div>
+</div>
+
+<div class="note"><b>Artifact Evaluation：</b>OSDI / ATC / EuroSys / SOSP 由统一的 <a href="https://sysartifacts.github.io/">sysartifacts</a> 联盟组织，分 Available / Functional / Reproduced 徽章。EuroSys 2025 发布的五年 AE 经验总结指出，失败的主因是 <b>GPU 特定硬件依赖</b> 与 <b>CUDA-driver-NCCL 版本漂移</b>。实践：从第一天就用 Docker/Apptainer 固定 CUDA / 驱动 / NCCL / vLLM commit hash，公开 lockfile。</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8"><span class="num">08</span>如果是我，接下来四周这么做</h2>
+<div class="card">
+<ol>
+<li><b>第 1 周 · 建地基。</b>在小集群上拉起 vLLM V1 + SGLang 双基线，跑通 <code>vllm bench sweep serve</code>；同时把 <b>ServeGen</b>、Azure trace、Mooncake trace 三套负载接进来。用 nccl-tests + nvbandwidth 把集群的真实拓扑带宽测出来存档——后面所有模拟器标定都要用它。</li>
+<li><b>第 2 周 · 装杠杆。</b>部署 <b>Vidur</b>，用第 1 周的实测数据标定它，报出「模拟 vs 实测」误差。这一步做完，你就有了「用 8 卡讲 1024 卡故事」的合法性。</li>
+<li><b>第 3 周 · 打一枪确定性最高的。</b>做 <b>Gap 7</b>（重测经典系统在真实 trace 下的表现）——纯软件、低风险、必出结论，而且这份 measurement 会自然暴露出 Gap 2 的相图边界在哪。</li>
+<li><b>第 4 周 · 选主攻方向。</b>结合第 3 周的观测，在 <b>Gap 1（自动并行搜索）</b> 与 <b>Gap 2（分/合判据）</b> 之间二选一作为主线——这两个和你的资源最匹配，且都能用「小集群实测 + 模拟器外推」的方法论撑住规模。Gap 5（Agentic/RL）回报高但赛道已经很挤，除非你有独特的 workload 来源。</li>
+</ol>
+</div>
+
+<div class="note"><b>关于核验：</b>本报告的论文条目经过 USENIX / ACM DL / arXiv / dblp / 会议官方 accepted list 交叉核对。仍需注意：<b>①</b> ASPLOS 2026 与 MLSys 2026 的部分条目来自三方 tracker，最终标题可能微调；<b>②</b> ISCA 2026 与 ATC 2026 的完整列表在调研时尚未公开，故覆盖不全；<b>③</b> 云 GPU 价格波动极大，仅作量级参考；<b>④</b> EPLB / LPLB / DeepEP 是 DeepSeek 开源代码与技术说明，<b>不是同行评审论文</b>，引用时需注明。</div>
+
+<footer>
+  分布式 LLM 推理并行化调研 · 数据截至 2026-07-26 · 由 Claude 整理，论文条目建议引用前二次核验<br>
+  主要来源：USENIX（OSDI/NSDI/ATC/FAST）、ACM DL（SOSP/ASPLOS/EuroSys/SIGCOMM）、mlsys.org、arXiv、各项目官方仓库与文档。
+</footer>
+
+</div>
+
+<script>
+const TOPICS = [
+  {id:'disagg', name:'解耦 (P/D · 模块)', cls:'c1'},
+  {id:'moe',    name:'MoE / EP',          cls:'c2'},
+  {id:'kv',     name:'KV Cache',          cls:'c3'},
+  {id:'sched',  name:'调度 / 多租户',      cls:'c4'},
+  {id:'long',   name:'长上下文 / CP',      cls:'c5'},
+  {id:'hetero', name:'异构 / 去中心化',    cls:'c6'},
+  {id:'agent',  name:'Agentic / RL',      cls:'c7'},
+  {id:'infra',  name:'模拟器 / Benchmark', cls:'c8'},
+];
+const P = [
+ {t:'DistServe: Disaggregating Prefill and Decoding for Goodput-optimized LLM Serving',u:'https://arxiv.org/abs/2401.09670',v:'OSDI 2024',ok:1,o:'北大 · UCSD',d:'P/D 分离到不同 GPU 集群，各自独立配并行度与 batching；首次提出以 goodput 而非吞吐为目标，用模拟器搜跨阶段资源分配',k:['disagg','sched']},
+ {t:'Splitwise: Efficient Generative LLM Inference Using Phase Splitting',u:'https://arxiv.org/abs/2311.18677',v:'ISCA 2024',ok:1,o:'Microsoft Azure · UW',d:'基于 Azure 生产 trace 证明 prefill 计算密集 / decode 显存密集，分离后可用更便宜硬件承担 decode',k:['disagg','hetero']},
+ {t:'Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving',u:'https://arxiv.org/abs/2407.00079',v:'FAST 2025',ok:1,o:'Moonshot AI (Kimi) · 清华',d:'以分离式 KV cache 池（DRAM/SSD/RDMA）为架构核心，prefill/decode 集群与全局 KV 存储解耦；预测式调度 + 过载提前拒绝。已开源并被 vLLM 集成',k:['disagg','kv']},
+ {t:'MegaScale-Infer: Serving MoE at Scale with Disaggregated Expert Parallelism',u:'https://arxiv.org/abs/2504.02263',v:'SIGCOMM 2025',ok:1,o:'ByteDance',d:'把 Attention 与 Expert 模块拆成独立伸缩的服务单元（模块级解耦），ping-pong 流水并行掩盖 all-to-all，单卡吞吐 1.90×',k:['disagg','moe']},
+ {t:'Helix Parallelism: Rethinking Sharding Strategies for Multi-Million-Token Decoding',u:'https://arxiv.org/abs/2507.07120',v:'arXiv 2025-07',ok:1,o:'NVIDIA',d:'同一批 GPU 在 attention 阶段做 KV 并行、FFN 阶段切回 TP/EP，batchwise overlap 掩盖切换通信；TTFT ↓1.5×，batch 可放大 32×',k:['long','disagg']},
+ {t:'LoongServe: Efficiently Serving Long-context LLMs with Elastic Sequence Parallelism',u:'https://arxiv.org/abs/2404.09526',v:'SOSP 2024',ok:1,o:'北京大学',d:'弹性序列并行（ESP）：按请求实时调整序列并行度，解决长上下文 prefill 与 decode 混跑的资源碎片与负载不均',k:['long','sched']},
+ {t:'Helix: Serving LLMs over Heterogeneous GPUs and Network via Max-Flow',u:'https://arxiv.org/abs/2406.01566',v:'ASPLOS 2025',ok:1,o:'CMU',d:'把异构 GPU + 异构网络下的模型切分与请求路由建模为最大流问题联合求解，吞吐 +40%。注意与 NVIDIA 的 Helix Parallelism 无关',k:['hetero']},
+ {t:'HexGen-2: Disaggregated Generative Inference of LLMs in Heterogeneous Environment',u:'https://arxiv.org/abs/2502.07903',v:'ICLR 2025',ok:1,o:'HKUST',d:'异构 GPU/网络下的 P/D 分离调度：放置与通信建模为约束优化，图划分 + 最大流求解，吞吐 2.0×、成本 ↓30%',k:['hetero','disagg']},
+ {t:'WaferLLM: Large Language Model Inference at Wafer Scale',u:'https://www.usenix.org/system/files/osdi25-he.pdf',v:'OSDI 2025',ok:1,o:'Edinburgh · Microsoft',d:'面向晶圆级加速器的推理系统，提出 MeshGEMM/MeshGEMV 适配片上网格拓扑，是与多卡 TP 完全不同的并行范式',k:['hetero']},
+ {t:'NanoFlow: Towards Optimal Large Language Model Serving Throughput',u:'https://arxiv.org/abs/2408.12757',v:'OSDI 2025',ok:1,o:'UW',d:'提出「设备内并行」：把计算/访存/网络操作在单卡内细粒度重叠调度，突破「卡间并行」思维定式，逼近硬件理论上限',k:['sched']},
+ {t:'Aegaeon: Effective GPU Pooling for Concurrent LLM Serving on the Market',u:'https://ennanzhai.github.io/pub/sosp25-aegaeon.pdf',v:'SOSP 2025',ok:1,o:'北大 · 阿里云',d:'多模型市场场景下的 token 级 GPU 池化与快速模型切换，213 张 GPU 达到等效 1192 张的产出（宣称 ↓82% GPU 用量）',k:['sched']},
+ {t:'PrefillOnly: An Inference Engine for Prefill-only Workloads',u:'https://arxiv.org/abs/2505.07203',v:'SOSP 2025',ok:1,o:'UChicago · 清华 · LinkedIn · Berkeley',d:'观察到 RAG/Agent 中大量请求只需 prefill（要 embedding/score 而非生成），为其设计跳过 decode 内存与调度开销的专用引擎',k:['disagg','agent']},
+ {t:'Jenga: Effective Memory Management for Serving LLM with Heterogeneity',u:'https://arxiv.org/abs/2503.18292',v:'SOSP 2025',ok:1,o:'清华 · UChicago · Berkeley',d:'针对「层异构」模型（如 Mamba+Transformer 混合、不同层 KV 形状不同）设计统一分块分配器，解决 PagedAttention 的同构假设。有 AE artifact',k:['kv']},
+ {t:'KTransformers: CPU/GPU Hybrid Inference for MoE Models',u:'https://dl.acm.org/doi/10.1145/3731569.3764843',v:'SOSP 2025',ok:1,o:'清华 MADSys · Approaching.AI',d:'冷专家放 CPU 内存、热专家常驻 GPU，配高性能 CPU 算子，单卡跑 671B 级 MoE（DeepSeek-V3）。已被 SGLang 集成',k:['moe','hetero']},
+ {t:'DiffKV: Differentiated Memory Management with Parallel KV Compaction',u:'https://dl.acm.org/doi/10.1145/3731569',v:'SOSP 2025',ok:0,o:'华为 · CUHK · 上交',d:'区分 K 与 V 的精度敏感度及 token 重要性，做差异化量化 + 并行 compaction',k:['kv']},
+ {t:'DCP: Addressing Input Dynamism in Long-Context Training via Dynamic Context Parallelism',u:'https://arxiv.org/html/2510.10620v1',v:'SOSP 2025',ok:0,o:'港大 · AWS',d:'针对输入长度高度动态的长上下文场景，运行时自适应调整 CP 切分粒度',k:['long']},
+ {t:'Pie: A Programmable Serving System for Emerging LLM Applications',u:'https://dl.acm.org/doi/10.1145/3731569.3764814',v:'SOSP 2025',ok:1,o:'Yale',d:'提供可编程服务抽象，让用户自定义 Agent/RAG 等新应用的调度策略，而非固定 batching 逻辑',k:['sched','agent']},
+ {t:'CacheBlend: Fast LLM Serving for RAG with Cached Knowledge Fusion',u:'https://dl.acm.org/doi/10.1145/3689031.3696098',v:'EuroSys 2025',ok:1,o:'UChicago 系',d:'RAG 中多个非前缀检索片段的 KV 融合复用 + 选择性重算恢复交叉注意力，突破 prefix-cache 只能前缀匹配的限制',k:['kv']},
+ {t:'vAttention: Dynamic Memory Management for Serving LLMs without PagedAttention',u:'https://dl.acm.org/doi/10.1145/3676641.3715983',v:'ASPLOS 2025',ok:1,o:'MSR India',d:'用 CUDA 虚拟内存机制实现动态 KV 分配，不依赖 PagedAttention 的非连续布局，兼顾性能与实现简洁。已开源',k:['kv']},
+ {t:'POD-Attention: Unlocking Full Prefill-Decode Overlap',u:'https://dl.acm.org/doi/10.1145/3676641.3715996',v:'ASPLOS 2025',ok:1,o:'UW · MSR India',d:'融合 kernel 让同一 SM 内同时执行 prefill 与 decode，是「单卡内微观解耦」路线，与跨节点 P/D 解耦形成对照',k:['disagg','sched']},
+ {t:'ServeGen: Workload Characterization and Generation of LLM Serving in Production',u:'https://www.usenix.org/conference/nsdi26/presentation/xiang-servegen',v:'NSDI 2026',ok:1,o:'阿里云',d:'2025 年 1–4 月 35.4 亿请求、12 模型、万级 GPU 的生产负载刻画：到达过程无法单分布拟合、输入输出长度弱相关、29/2412 客户占 90% 流量；证明 ShareGPT+Poisson 会让容量规划低估 50%',k:['infra']},
+ {t:'FastServe: Iteration-Level Preemptive Scheduling for LLM Inference',u:'https://www.usenix.org/conference/nsdi26/spring-accepted-papers',v:'NSDI 2026',ok:1,o:'北京大学',d:'token 粒度抢占式调度让短请求插队，消除头部阻塞，配高效 KV 状态换入换出',k:['sched']},
+ {t:'FlexLLM: Token-Level Co-Serving of LLM Inference and Finetuning with SLO Guarantees',u:'https://www.usenix.org/conference/nsdi26/spring-accepted-papers',v:'NSDI 2026',ok:1,o:'CMU · Purdue · Stanford 等',d:'推理请求与微调作业在同一 batch 内按 token 粒度共享 GPU，推理保 SLO、微调填空闲算力',k:['sched','agent']},
+ {t:'DroidSpeak: KV Cache Sharing Across Fine-tuned Model Variants',u:'https://www.usenix.org/conference/nsdi26/spring-accepted-papers',v:'NSDI 2026',ok:1,o:'UChicago · Microsoft',d:'发现同基座的不同微调变体间 KV cache 高度可迁移，提出跨模型变体的复用协议，宣称最高 4× 吞吐',k:['kv']},
+ {t:'Autellix / Agentix: An Efficient Serving Engine for LLM Agents as General Programs',u:'https://arxiv.org/abs/2502.13965',v:'NSDI 2026',ok:1,o:'UC Berkeley',d:'把 Agent 建模为含工具调用与控制流的「通用程序」而非单次请求，按程序级依赖图调度，优化端到端而非单调用延迟',k:['agent','sched']},
+ {t:'RollPacker: Taming Long-Tail Rollouts for RL Post-Training with Tail Batching',u:'https://www.usenix.org/conference/nsdi26/spring-accepted-papers',v:'NSDI 2026',ok:1,o:'—',d:'针对 RL rollout 长度长尾分布，提出尾部批处理重组 batch 构成',k:['agent']},
+ {t:'Revisiting Pipeline Parallelism for LLM Serving',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'重新审视 PP 在推理（而非训练）场景下的适用性，是少见的服务侧流水并行专题研究。值得优先精读',k:['disagg','sched']},
+ {t:'OpenTela: Unifying Decentralized Computing Resources for Heterogeneous LLM Serving',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'面向去中心化算力池的异构 LLM 服务统一层，「异构 × 去中心化」交叉方向',k:['hetero']},
+ {t:'Kairox: Adaptive GPU-CPU Hybrid LLM Inference via Online Neuron Balancing',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'在线神经元级 GPU/CPU 负载均衡，与 KTransformers 的静态热度划分形成动态 vs 静态对照',k:['hetero','moe']},
+ {t:'Strata: Hierarchical Context Caching for Long Context Language Model Serving',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'长上下文服务的分层 context caching',k:['kv','long']},
+ {t:'Prism: Cost-Efficient Multi-LLM Serving via GPU Memory Ballooning',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'用显存气球机制在多模型间动态借还显存，提升多 LLM 共存的成本效率',k:['sched']},
+ {t:'UEP: Portable Expert-Parallel Communication',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'可移植的专家并行通信层（DeepEP 之外的另一条路线）',k:['moe']},
+ {t:'RollArt: Disaggregated Multi-Task Agentic RL Training at Scale',u:'https://arxiv.org/abs/2512.22560',v:'OSDI 2026',ok:1,o:'—',d:'把 rollout（生成 + 环境交互）与 training（梯度更新）基础设施解耦部署，支持大规模多任务 Agentic RL —— P/D 解耦思想向 RL 的迁移',k:['agent','disagg']},
+ {t:'Seer: Online Context Learning for Fast Synchronous LLM Reinforcement Learning',u:'https://arxiv.org/abs/2511.14617',v:'OSDI 2026',ok:1,o:'—',d:'针对同步 RL（PPO/GRPO 需等所有 rollout）的长尾问题，在线预测并提前调度长尾请求',k:['agent','sched']},
+ {t:'Weave: Efficient Co-Scheduling for Disaggregated RL Post-Training',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'解耦后 rollout 与 training 集群的协同调度，解决两侧负载不匹配的资源闲置',k:['agent','disagg']},
+ {t:'RobustRL: Role-Based Fault Tolerance System for RL Post-Training',u:'https://paper.lingyunyang.com/reading-notes/conference/osdi-2026',v:'OSDI 2026',ok:1,o:'—',d:'按 actor/critic/reward 等角色设计差异化容错策略，而非整体式 checkpoint',k:['agent']},
+ {t:'Context Parallelism for Scalable Million-Token Inference',u:'https://jianyuhuang.com/papers/cp.pdf',v:'MLSys 2025',ok:1,o:'Meta',d:'面向推理（非训练）的上下文并行方案，ring/all-gather 混合通信降低百万 token 场景的 TTFT',k:['long']},
+ {t:'LServe: Efficient Long-sequence LLM Serving with Unified Sparse Attention',u:'https://arxiv.org/abs/2502.14866',v:'MLSys 2025',ok:1,o:'MIT 系',d:'统一稀疏注意力框架同时处理 prefill 与 decode 阶段的长序列稀疏化',k:['long']},
+ {t:'Vidur: A Large-Scale Simulation Framework for LLM Inference',u:'https://arxiv.org/abs/2405.05465',v:'MLSys 2024',ok:1,o:'Microsoft · Georgia Tech',d:'算子级 profiling + 预测建模，无需实机即可评估并行配置与调度策略；误差 <9%，Vidur-Search 1 CPU-hour 替代 42K GPU-hours',k:['infra']},
+ {t:'LLMServingSim 2.0: HW/SW Co-Simulation for Heterogeneous & Disaggregated Serving',u:'https://arxiv.org/abs/2408.05499',v:'arXiv / KAIST',ok:1,o:'KAIST CASYS',d:'迭代级协同仿真，可插拔加速器后端；2.0 扩展到异构与分离式基础设施，误差 <14.7%，比加速器模拟器快 91.5×',k:['infra','hetero']},
+ {t:'SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale LLM Training',u:'https://www.usenix.org/system/files/nsdi25-wang-xizheng.pdf',v:'NSDI 2025',ok:1,o:'阿里云',d:'全栈集群仿真：SimCCL 拦截 NCCL 仿真集合通信，RoCEv2 fat-tree 拓扑；1024 GPU 端到端偏差 <4%。注意其 EP 建模假设 token 均衡分布',k:['infra']},
+ {t:'Fairness in Serving Large Language Models (VTC)',u:'https://arxiv.org/abs/2401.00588',v:'OSDI 2024',ok:1,o:'UC Berkeley',d:'连续批处理下的公平调度：virtual token counter 定义按 token 计费的成本函数，证明服务差异有 2× 紧上界且保持 work-conserving',k:['sched','infra']},
+ {t:'DeepSeek-V3/R1 Inference System Overview (含 DeepEP / EPLB)',u:'https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md',v:'技术报告 2025',ok:0,o:'DeepSeek',d:'96×H100 生产部署：Attention-DP（MLA 让 KV 极小）+ 跨节点大规模 EP + 冗余专家，DualPipe 做通信-计算重叠。注意这不是同行评审论文',k:['moe','disagg']},
+ {t:'FineMoE: Taming Latency-Memory Trade-Off via Fine-Grained Expert Offloading',u:'https://arxiv.org/abs/2502.05370',v:'EuroSys 2026',ok:1,o:'—',d:'细粒度专家换入换出策略，降低 MoE 服务的延迟-显存权衡',k:['moe']},
+ {t:'On the Diminishing Returns of Expert Load Balancing in MoE LLM Serving',u:'https://mlsys.org/Conferences/2026',v:'MLSys 2026',ok:0,o:'—',d:'系统分析专家负载均衡在真实 serving 中收益递减的原因，对大量「均衡优先」设计提出反思。做 EP 方向必读的反方观点',k:['moe']},
+ {t:'CRAFT: Fine-Grained Cost-Aware Expert Replication for Efficient MoE Serving',u:'https://mlsys.org/Conferences/2026',v:'MLSys 2026',ok:0,o:'—',d:'按专家热度与成本做细粒度副本复制，是对静态 EP 切分的动态改良',k:['moe']},
+ {t:'LYNX: Workload-Agnostic Expert Remapping for Efficient MoE Inference',u:'https://mlsys.org/Conferences/2026',v:'MLSys 2026',ok:0,o:'—',d:'不依赖 workload 分布假设的在线专家-设备重映射',k:['moe']},
+ {t:'REMIX: Dynamic Partitioning for Fine-Grained Heterogeneous LLM Serving',u:'https://mlsys.org/Conferences/2026',v:'MLSys 2026',ok:0,o:'—',d:'异构 GPU 服务集群中的细粒度动态模型切分',k:['hetero']},
+ {t:'SwiftSpec: Disaggregated Speculative Decoding with Fused Kernel Optimizations',u:'https://arxiv.org/abs/2506.11309',v:'ASPLOS 2026',ok:0,o:'—',d:'draft 与 target 模型解耦部署 + 融合 kernel 降低跨阶段调度开销，把解耦思想用到投机解码',k:['disagg']},
+ {t:'Adrenaline: Attention-FFN Disaggregation for LLM Serving',u:'https://arxiv.org/abs/2503.20552',v:'arXiv 2025',ok:1,o:'—',d:'把 attention 算子本身从 FFN 中解耦（AFD），利用 decode 阶段 attention 访存密集 / FFN 计算密集的互补性做资源复用',k:['disagg']},
+ {t:'KVDirect: Distributed Disaggregated LLM Inference',u:'https://arxiv.org/abs/2501.14743',v:'arXiv 2025',ok:1,o:'—',d:'面向 P/D 分离的 KV 传输机制：tensor-centric 的 pull 式传输替代同步阻塞传输，请求延迟 ↓55%',k:['disagg','kv']},
+ {t:'DynaServe: Unified Elastic Execution for Dynamic Disaggregated LLM Serving',u:'https://arxiv.org/html/2504.09285v2',v:'arXiv 2025',ok:1,o:'—',d:'提出 micro-request 抽象，请求可在任意 token 边界拆成两段分别在 colocate / disaggregate 实例执行，兼顾两种架构',k:['disagg']},
+ {t:'Star Attention: Efficient LLM Inference over Long Sequences',u:'https://arxiv.org/abs/2411.17116',v:'arXiv 2024 / ICML 2025',ok:1,o:'NVIDIA',d:'两阶段块稀疏注意力：先跨主机做局部块内注意力（无需全局同步），再做全局查询注意力；延迟/内存 ↓最高 11×，精度保持 97–100%',k:['long']},
+ {t:'Sarathi-Serve: Taming Throughput-Latency Tradeoff with Chunked Prefills',u:'https://arxiv.org/abs/2308.16369',v:'OSDI 2024',ok:1,o:'Microsoft · Georgia Tech',d:'Chunked prefill：长 prefill 切块与 decode token 拼车进同一 batch。现已是所有生产框架的默认调度原型',k:['sched']},
+ {t:'AlpaServe: Statistical Multiplexing with Model Parallelism for Deep Learning Serving',u:'https://arxiv.org/abs/2302.11665',v:'OSDI 2023',ok:1,o:'UC Berkeley',d:'推理场景自动并行/放置搜索的代表作：统计复用 + 自动选并行策略最大化多模型场景的 SLO 达成率。做 Gap 1 的必读起点',k:['sched','infra']},
+ {t:'Petals: Collaborative Inference and Fine-tuning of Large Models',u:'https://arxiv.org/abs/2209.01188',v:'ACL Demo 2023',ok:1,o:'BigScience · Yandex',d:'BitTorrent 式志愿者协作推理：模型按层分布在互联网异构节点，流水式远程执行。去中心化推理的奠基工作',k:['hetero']},
+ {t:'Parallax: Decentralized LLM Serving over WAN',u:'https://arxiv.org/abs/2509.26182',v:'arXiv 2025',ok:1,o:'Gradient Network',d:'两阶段调度：模型放置阶段跨异构 GPU 联合优化延迟/吞吐；请求时动态选跨副本执行路径以适应实时网络状况',k:['hetero']},
+ {t:'HybridFlow: A Flexible and Efficient RLHF Framework',u:'https://arxiv.org/abs/2409.19256',v:'EuroSys 2025',ok:1,o:'ByteDance 等',d:'统一编程模型支持多种 RLHF 算法灵活组合 actor/critic/reward/ref 各模型的并行策略（多角色混合并行）',k:['agent']},
+ {t:'LithOS: An Operating System for Efficient Machine Learning on GPUs',u:'https://arxiv.org/abs/2504.15465',v:'SOSP 2025',ok:1,o:'CMU · Meta',d:'GPU 的 OS 层抽象，统一管理多租户 ML 负载的时空复用、隔离与调度原语',k:['sched']},
+ {t:'TraceLab: Characterizing Coding Agent Workloads for LLM Serving',u:'https://arxiv.org/abs/2606.30560',v:'arXiv 2026',ok:0,o:'—',d:'少见的公开 coding agent 工作负载 trace，刻画多轮工具调用对 serving 的影响特征',k:['infra','agent']},
+];
+
+const tbody = document.querySelector('#ptable tbody');
+const filters = document.getElementById('filters');
+let active = new Set();
+
+function chipFor(id){const t=TOPICS.find(x=>x.id===id);return t?`<span class="chip"><i class="dot ${t.cls}"></i>${t.name}</span>`:'';}
+
+function render(){
+  const rows = P.filter(p => active.size===0 || p.k.some(k=>active.has(k)));
+  tbody.innerHTML = rows.map(p=>`<tr>
+    <td><a href="${p.u}" target="_blank" rel="noopener">${p.t}</a></td>
+    <td style="white-space:nowrap">${p.v}${p.ok?'':' <span title="来自三方 tracker，未官方核验" style="color:var(--warn)">⚠</span>'}</td>
+    <td style="white-space:nowrap;color:var(--ink-2)">${p.o}</td>
+    <td style="color:var(--ink-2)">${p.d}</td>
+    <td>${p.k.map(chipFor).join(' ')}</td></tr>`).join('');
+  document.getElementById('tcount').textContent = `显示 ${rows.length} / ${P.length} 篇`;
+}
+
+filters.innerHTML = `<button data-id="__all" aria-pressed="true">全部</button>` +
+  TOPICS.map(t=>`<button data-id="${t.id}" aria-pressed="false"><i class="dot ${t.cls}"></i>${t.name}</button>`).join('');
+filters.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  const id = b.dataset.id;
+  if(id==='__all'){ active.clear(); }
+  else { active.has(id) ? active.delete(id) : active.add(id); }
+  [...filters.querySelectorAll('button')].forEach(x=>{
+    x.setAttribute('aria-pressed', x.dataset.id==='__all' ? (active.size===0) : active.has(x.dataset.id));
+  });
+  render();
+});
+render();
+
+const btn = document.getElementById('themeBtn');
+btn.addEventListener('click', ()=>{
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', dark?'light':'dark');
+  btn.textContent = dark?'切换深色':'切换浅色';
+});
+if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.setAttribute('data-theme','dark'); btn.textContent='切换浅色';
+}
+</script>
+</body>
+</html>

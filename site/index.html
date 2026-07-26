@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LLM 推理、GPU 调度与相关开源资源的专题资料库。">
+  <title>LLM 推理资料库</title>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-content">
+      <a class="brand" href="./" aria-label="LLM 推理资料库首页">
+        <span class="brand-mark" aria-hidden="true">λ</span>
+        <span>LLM 推理资料库</span>
+      </a>
+      <p class="header-note">研究资料 · 工程参考 · 演示文稿</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero shell" aria-labelledby="page-title">
+      <p class="eyebrow">KNOWLEDGE BASE / 2026</p>
+      <h1 id="page-title">把零散调研，整理成可持续访问的资料库。</h1>
+      <p class="intro">收录分布式 LLM 推理、细粒度 GPU 算力调度及其开源实现。每份资料均使用稳定的英文 URL，适合直接分享、收藏和通过 GitHub Pages 公开托管。</p>
+      <div class="stat-row" aria-label="资料库概览">
+        <div><strong id="itemCount">4</strong><span>已收录资料</span></div>
+        <div><strong>3</strong><span>交互式调研页</span></div>
+        <div><strong>1</strong><span>演示文稿</span></div>
+      </div>
+    </section>
+
+    <section class="library shell" aria-labelledby="library-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">LIBRARY</p>
+          <h2 id="library-title">按类别浏览</h2>
+        </div>
+        <label class="search" for="searchInput">
+          <span class="sr-only">搜索资料</span>
+          <input id="searchInput" type="search" placeholder="搜索标题、标签或描述" autocomplete="off">
+        </label>
+      </div>
+      <div class="filters" id="categoryFilters" aria-label="资料分类"></div>
+      <p class="results" id="resultsSummary" aria-live="polite"></p>
+      <div class="content-grid" id="contentGrid"></div>
+    </section>
+
+    <section class="howto shell" aria-labelledby="howto-title">
+      <p class="eyebrow">MAINTENANCE</p>
+      <h2 id="howto-title">这是一个轻量 CMS，而不是一次性的文件夹</h2>
+      <div class="steps">
+        <article><span>01</span><h3>放入内容</h3><p>把新 HTML 放到 <code>site/content/分类/</code>，附件放到 <code>site/downloads/</code>。</p></article>
+        <article><span>02</span><h3>登记资料</h3><p>在 <code>site/assets/catalog.js</code> 填写标题、分类、标签与稳定链接。</p></article>
+        <article><span>03</span><h3>自动发布</h3><p>推送到 GitHub 后，Pages 工作流会将 <code>site/</code> 发布到公网。</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><span>LLM 推理资料库</span><span>静态托管 · 无数据库 · 易于迁移</span></div>
+  </footer>
+  <script src="assets/catalog.js"></script>
+  <script src="assets/site.js"></script>
+</body>
+</html>

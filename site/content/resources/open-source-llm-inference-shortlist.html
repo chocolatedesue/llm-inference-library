@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>开源代码清单 · 分布式推理 + 细粒度 GPU 调度</title>
+<style>
+:root{color-scheme:light;--surface-1:#fcfcfb;--page:#f9f9f7;--ink-1:#0b0b0b;--ink-2:#52514e;--ink-3:#898781;
+ --grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,0.10);
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#4a3aa7;--s8:#e34948;
+ --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b}
+:root[data-theme="dark"]{color-scheme:dark;--surface-1:#1a1a19;--page:#0d0d0d;--ink-1:#fff;--ink-2:#c3c2b7;--ink-3:#898781;
+ --grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,0.10);
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink-1);
+ font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+ font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 110px}
+header.hero{padding:60px 0 32px;border-bottom:1px solid var(--grid)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.25;margin:0 0 12px;letter-spacing:-.02em}
+.sub{color:var(--ink-2);font-size:17px;max-width:76ch;margin:0}
+.meta{margin-top:18px;color:var(--ink-3);font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+h2{font-size:23px;margin:52px 0 4px;letter-spacing:-.01em;scroll-margin-top:66px}
+h2 .num{color:var(--ink-3);font-variant-numeric:tabular-nums;margin-right:11px;font-weight:400}
+.lede{color:var(--ink-2);max-width:82ch;margin:6px 0 4px}
+a{color:var(--s1);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+code{background:var(--surface-1);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.86em}
+nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--page) 92%,transparent);
+ backdrop-filter:blur(8px);border-bottom:1px solid var(--grid)}
+nav.toc .inner{max-width:1180px;margin:0 auto;padding:9px 24px;display:flex;gap:6px;overflow-x:auto;align-items:center}
+nav.toc a{font-size:12.5px;color:var(--ink-2);white-space:nowrap;padding:4px 9px;border-radius:6px;border:none}
+nav.toc a:hover{background:var(--surface-1);color:var(--ink-1)}
+.theme-btn{margin-left:auto;flex:none;font-size:12px;color:var(--ink-2);background:var(--surface-1);
+ border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:16px 0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:15px 17px}
+.tile .k{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:3px 0 5px;line-height:1.3}
+.tile .d{font-size:13px;color:var(--ink-2);line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+th{text-align:left;font-weight:600;color:var(--ink-2);font-size:12px;text-transform:uppercase;
+ letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--axis)}
+td{padding:10px;border-bottom:1px solid var(--grid);vertical-align:top;line-height:1.6}
+tr:hover td{background:color-mix(in srgb,var(--surface-1) 70%,var(--grid))}
+.tblwrap{overflow-x:auto;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:4px 14px 10px}
+.tblwrap table{min-width:900px;table-layout:fixed}
+.repo{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;word-break:break-all}
+.badge{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:5px;white-space:nowrap}
+.m-prod{background:var(--good);color:#fff}
+.m-act{background:var(--s1);color:#fff}
+.m-art{background:var(--warn);color:#0b0b0b}
+.m-stale{background:var(--grid);color:var(--ink-2)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2px 8px;border-radius:20px;
+ border:1px solid var(--border);color:var(--ink-2);background:var(--surface-1);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}.c4{background:var(--s4)}
+.c5{background:var(--s5)}.c6{background:var(--s6)}.c7{background:var(--s7)}
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 6px;align-items:center}
+.filters button{font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer;
+ border:1px solid var(--border);background:var(--surface-1);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.filters button[aria-pressed="true"]{background:var(--ink-1);color:var(--page);border-color:var(--ink-1)}
+.filters button[aria-pressed="true"] .dot{outline:1.5px solid var(--page)}
+.note{background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--warn);
+ border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13.5px;color:var(--ink-2)}
+.note b{color:var(--ink-1)}
+.ok{border-left-color:var(--good)}.bad{border-left-color:var(--crit)}
+ul,ol{padding-left:22px;margin:8px 0}li{margin:5px 0;color:var(--ink-2)}
+li b{color:var(--ink-1)}
+.small{font-size:12.5px;color:var(--ink-3)}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--grid);color:var(--ink-3);font-size:12.5px}
+.stack{counter-reset:st;margin:18px 0}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--grid)}
+.step:last-child{border-bottom:none}
+.step .n{width:26px;height:26px;border-radius:50%;background:var(--s1);color:#fff;display:flex;
+ align-items:center;justify-content:center;font-size:13px;font-weight:600;margin-top:2px}
+.step .t{font-weight:600;font-size:15px}
+.step .b{font-size:13.5px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<nav class="toc"><div class="inner">
+  <a href="#s0">怎么用</a><a href="#s1">服务框架</a><a href="#s2">KV/通信</a>
+  <a href="#s3">细粒度共享</a><a href="#s4">模拟器</a><a href="#s5">负载/评测</a>
+  <a href="#s6">论文 artifact</a><a href="#s7">起步栈</a>
+  <button class="theme-btn" id="themeBtn">切换深色</button>
+</div></nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <h1>开源代码清单<br>——两份调研里真正能上手的那些</h1>
+  <p class="sub">从「分布式推理并行化」与「细粒度 GPU 算力调度」两份调研中筛出<b>有公开可用代码</b>的工作。按你会怎么用它们分层，并标注成熟度——因为「论文 artifact」和「能长期依赖的基线」是两回事，混用会踩坑。</p>
+  <div class="meta"><span>整理于 2026-07-26</span><span>50 个仓库</span><span>成熟度分四档</span></div>
+</header>
+
+<h2 id="s0"><span class="num">00</span>成熟度标注怎么读</h2>
+<div class="grid3" style="margin-top:16px">
+  <div class="tile"><div class="k">最重要的区分</div><div class="v"><span class="badge m-prod">生产级</span> vs <span class="badge m-art">论文 artifact</span></div><div class="d"><b>生产级 / 活跃研究项目</b>可以当长期基线，社区会帮你修 bug、跟新硬件。<b>论文 artifact</b> 多数是发论文时的一次性快照，通常锁死在某个 CUDA/框架版本，<b>只适合作为对照组复现，不要在上面长期开发</b>。</div></div>
+  <div class="tile"><div class="k">四档定义</div><div class="v" style="font-size:15px"><span class="badge m-prod">生产级</span> <span class="badge m-act">活跃研究</span><br><span class="badge m-art">论文 artifact</span> <span class="badge m-stale">停更/慎用</span></div><div class="d">生产级=有版本发布节奏、被工业界部署；活跃研究=持续更新但 API 会变；artifact=AE 快照；停更=超一年无更新或已被取代。</div></div>
+  <div class="tile"><div class="k">已核实的星标</div><div class="v" style="font-size:15px">仅少数几个</div><div class="d">沙箱无法批量访问 GitHub API，所以<b>没有编造星标数</b>。少数抽查过的会在备注里注明（如 kvcached 1.1k、BulletServe 53、Tally 12）。成熟度分档基于调研中确认的版本发布节奏与工业采用情况。</div></div>
+</div>
+
+<h2 id="s1"><span class="num">01</span>服务框架：你在谁身上改</h2>
+<p class="lede">这一层决定你的工作量下限。做<b>并行策略/调度</b>选 vLLM 或 SGLang；做<b>细粒度 SM 分配</b>要看 FlashInfer（green_ctx 在这里）；做<b>集群编排</b>才用 Dynamo / llm-d。</p>
+<div class="tblwrap"><table>
+<colgroup><col style="width:24%"><col style="width:11%"><col style="width:31%"><col style="width:34%"></colgroup>
+<thead><tr><th>仓库</th><th>成熟度</th><th>是什么</th><th>你该拿它做什么</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/vllm-project/vllm" class="repo">vllm-project/vllm</a></td><td><span class="badge m-prod">生产级</span></td><td>V1 引擎：scheduler / worker 进程解耦，调度抽象为 token 预算</td><td><b>通用首选基线。</b>改调度策略继承 <code>Scheduler</code>；做 P/D 分离与 KV 迁移用 <code>KVConnector</code> API；<code>elastic_ep</code> 插件做弹性专家并行。reviewer 认可度最高</td></tr>
+<tr><td><a href="https://github.com/sgl-project/sglang" class="repo">sgl-project/sglang</a></td><td><span class="badge m-prod">生产级</span></td><td>RadixAttention 前缀树；调度逻辑纯 Python</td><td><b>改起来最快。</b>直接动 <code>schedule_batch.py</code> / <code>scheduler.py</code>。做前缀共享、新 batching 策略、MoE EP 首选</td></tr>
+<tr><td><a href="https://github.com/flashinfer-ai/flashinfer" class="repo">flashinfer-ai/flashinfer</a></td><td><span class="badge m-prod">生产级</span></td><td>注意力 kernel 库，<b>已有成熟 <code>green_ctx</code> 模块</b>（<code>split_device_green_ctx_by_sm_count</code>）</td><td><b>做细粒度 SM 分配的唯一现成入口。</b>vLLM/SGLang 都能用它当后端，是把 Green Context 接进 LLM serving 的最短路径</td></tr>
+<tr><td><a href="https://github.com/kvcache-ai/ktransformers" class="repo">kvcache-ai/ktransformers</a></td><td><span class="badge m-act">活跃研究</span></td><td>SOSP'25。冷专家放 CPU 内存、热专家常驻 GPU，单卡跑 671B 级 MoE</td><td>显存受限下做超大 MoE 实验；异构 offloading 策略研究。已被 SGLang 集成</td></tr>
+<tr><td><a href="https://github.com/ai-dynamo/dynamo" class="repo">ai-dynamo/dynamo</a></td><td><span class="badge m-prod">生产级</span></td><td>NVIDIA 跨引擎编排层，NIXL 做 KV 传输</td><td>集群级路由、自动扩缩容、KV-aware routing。<b>不适合改引擎内核</b></td></tr>
+<tr><td><a href="https://github.com/llm-d/llm-d" class="repo">llm-d/llm-d</a></td><td><span class="badge m-act">活跃研究</span></td><td>K8s 原生分布式推理栈，Inference Gateway + well-lit paths</td><td>多副本路由与 K8s 场景调度研究。单引擎内部仍依赖 vLLM</td></tr>
+<tr><td><a href="https://github.com/NVIDIA/TensorRT-LLM" class="repo">NVIDIA/TensorRT-LLM</a></td><td><span class="badge m-prod">生产级</span></td><td>C++/Python 混合运行时，PyTorch backend 为默认</td><td>只在需要「对齐 NVIDIA 官方性能数字」时用。<b>可改性最弱</b></td></tr>
+<tr><td><a href="https://github.com/ServerlessLLM/ServerlessLLM" class="repo">ServerlessLLM/ServerlessLLM</a></td><td><span class="badge m-act">活跃研究</span></td><td>OSDI'24。checkpoint 存储/加载优化、迁移式恢复</td><td>做冷启动、模型切换、serverless 场景的现成基线</td></tr>
+</tbody></table></div>
+
+<h2 id="s2"><span class="num">02</span>KV cache 与通信基础设施</h2>
+<p class="lede">做 P/D 分离、跨节点 KV 迁移、大规模 EP，<b>不要自己从零写传输层</b>——这三个已经是事实标准组件。</p>
+<div class="tblwrap"><table>
+<colgroup><col style="width:24%"><col style="width:11%"><col style="width:31%"><col style="width:34%"></colgroup>
+<thead><tr><th>仓库</th><th>成熟度</th><th>是什么</th><th>你该拿它做什么</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/kvcache-ai/Mooncake" class="repo">kvcache-ai/Mooncake</a></td><td><span class="badge m-prod">生产级</span></td><td>FAST'25，Kimi 生产系统。Transfer Engine 支持 RDMA/NVLink/TCP，实测 4×200Gbps RoCE 达 87 GB/s</td><td><b>跨节点 KV 迁移研究的最佳底座。</b>已被 vLLM/SGLang/LMDeploy/TensorRT-LLM 集成。仓库还附带 Kimi 生产 trace</td></tr>
+<tr><td><a href="https://github.com/LMCache/LMCache" class="repo">LMCache/LMCache</a></td><td><span class="badge m-prod">生产级</span></td><td>KV cache 层，跨请求/跨实例前缀复用 + CPU/磁盘卸载</td><td>做 KV 复用、分层存储、前缀缓存淘汰策略。已是 vLLM / Dynamo 的标准组件</td></tr>
+<tr><td><a href="https://github.com/deepseek-ai/DeepEP" class="repo">deepseek-ai/DeepEP</a></td><td><span class="badge m-prod">生产级</span></td><td>MoE 专用 all-to-all 通信库，NVLink + RDMA 混合，低延迟 dispatch/combine kernel</td><td><b>做大规模 EP 绕不开的组件。</b>注意：是开源代码而非同行评审论文，引用时需注明</td></tr>
+<tr><td><a href="https://github.com/deepseek-ai/EPLB" class="repo">deepseek-ai/EPLB</a> · <a href="https://github.com/deepseek-ai/LPLB" class="repo">LPLB</a></td><td><span class="badge m-act">活跃研究</span></td><td>专家并行负载均衡：冗余专家复制 + 分层放置；LPLB 用线性规划求最优复制</td><td>做 MoE 负载均衡的现成 baseline。配合 METRO 的「均衡激活专家数」观点做对照实验</td></tr>
+<tr><td><a href="https://github.com/feifeibear/long-context-attention" class="repo">feifeibear/long-context-attention</a></td><td><span class="badge m-act">活跃研究</span></td><td>USP：统一 Ring-style 与 Ulysses(all-to-all) 两类序列并行为 2D 混合方案</td><td>做长上下文 CP 实验的起点，省掉自己实现 ring attention 的时间</td></tr>
+<tr><td><a href="https://github.com/NVIDIA/Star-Attention" class="repo">NVIDIA/Star-Attention</a></td><td><span class="badge m-act">活跃研究</span></td><td>两阶段块稀疏注意力，延迟/内存最高降 11×，精度保持 97–100%</td><td>长上下文稀疏化的对照组</td></tr>
+</tbody></table></div>
+
+<h2 id="s3"><span class="num">03</span>细粒度 GPU 共享 —— 你上一个问题的方向</h2>
+<p class="lede">这一层的代码普遍规模小、星标少，但<b>这恰恰说明方向没被做透</b>。Bullet 是最值得先读的：它把 MPS + libsmctrl 组合起来做 SM 动态分配，代码不长，是这个方向最完整的开源样板。</p>
+<div class="tblwrap"><table>
+<colgroup><col style="width:24%"><col style="width:11%"><col style="width:31%"><col style="width:34%"></colgroup>
+<thead><tr><th>仓库</th><th>成熟度</th><th>是什么</th><th>你该拿它做什么</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/zejia-lin/BulletServe" class="repo">zejia-lin/BulletServe</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ASPLOS'26（中山大学）。<b>已核实：用 MPS 做空间共享 + libsmctrl 做 SM masking</b>，在 prefill/decode 间微秒级动态重分 SM。53 stars，3 commits</td><td><b>这个方向最完整的开源样板，优先精读。</b>它的 SM-scaling roofline 模型（18–30 次采样）可以直接搬到你自己的系统里</td></tr>
+<tr><td><a href="https://github.com/ovg-project/kvcached" class="repo">ovg-project/kvcached</a></td><td><span class="badge m-prod">生产级</span></td><td>Prism（OSDI'26）的 balloon driver。OS 式虚拟内存抽象做 KV cache 弹性分配。<b>已核实：1.1k stars，2026-04 有 v0.1.5 发布</b>，支持 vLLM 与 SGLang</td><td>做多模型共享显存、显存弹性伸缩。<b>这个方向唯一达到生产级的开源实现</b>，也是驳斥「显存已解决、算力才是空白」立场的最好靶子</td></tr>
+<tr><td><a href="https://github.com/SJTU-IPADS/reef" class="repo">SJTU-IPADS/reef</a> · <a href="https://github.com/SJTU-IPADS/reef-artifacts" class="repo">reef-artifacts</a></td><td><span class="badge m-art">论文 artifact</span></td><td>OSDI'22。Reset-based 微秒级 kernel 抢占 + Dynamic Kernel Padding。主评测在 AMD MI50</td><td>kernel 级抢占的经典对照组。注意主平台是 AMD，移植到 NVIDIA 有成本</td></tr>
+<tr><td><a href="https://github.com/eth-easl/orion" class="repo">eth-easl/orion</a></td><td><span class="badge m-art">论文 artifact</span></td><td>EuroSys'24（ETH）。拦截 CUDA/cuDNN/cuBLAS 调用进软件队列，按 SM 需求 + 优先级调度</td><td><b>做干扰隔离的标准 baseline。</b>ETH 组代码质量较好，拦截层的实现可直接借鉴</td></tr>
+<tr><td><a href="https://github.com/tally-project/tally" class="repo">tally-project/tally</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ASPLOS'25。Block 级 kernel 调度，非侵入式。<b>已核实：12 stars，296 commits，C++ 90%，另有 tally-bench 复现仓库</b></td><td>非侵入式拦截的实现参考；配套 bench 仓库省你搭对照实验的时间</td></tr>
+<tr><td><a href="https://github.com/pkusys/TGS" class="repo">pkusys/TGS</a></td><td><span class="badge m-art">论文 artifact</span></td><td>NSDI'23（北大）。容器下方 OS 层的自适应速率控制 + 透明统一内存</td><td>容器场景 GPU 共享的对照组</td></tr>
+<tr><td><a href="https://github.com/sakjain92/Fractional-GPUs" class="repo">sakjain92/Fractional-GPUs</a></td><td><span class="badge m-stale">停更/慎用</span></td><td>RTAS'19（CMU）。SM 集合隔离 + 页面着色做显存带宽隔离</td><td><b>思想值得读，代码别直接用</b>——只在 Pascal/Volta 验证过，且需要改应用源码</td></tr>
+<tr><td>libsmctrl<br><span class="small">UNC，见 <a href="https://www.cs.unc.edu/~jbakita/rtas23.pdf">RTAS'23 论文</a>获取仓库地址</span></td><td><span class="badge m-act">活跃研究</span></td><td>篡改 TMD 的 <code>SM_DISABLE_MASK</code> 做 TPC 掩码。纯用户态、不需 root、不改源码</td><td><b>做 TPC 级实验的关键工具。</b>但注意：CC 3.5–8.9 验证过，<b>Hopper 起掩码语义已变，Blackwell 未验证</b>；不兼容 CUDA Graphs</td></tr>
+<tr><td><a href="https://github.com/Project-HAMi/HAMi" class="repo">Project-HAMi/HAMi</a></td><td><span class="badge m-prod">生产级</span></td><td>K8s GPU 虚拟化中间件。显存硬限（拦截 <code>cuMemAlloc</code>）+ 算力令牌桶软限速</td><td>集群层分数 GPU 的现成实现，也是「算力软限速为何不够」的活教材。社区正在讨论用 Green Context 替换现有轮询限速器</td></tr>
+<tr><td><a href="https://github.com/NVIDIA/KAI-Scheduler" class="repo">NVIDIA/KAI-Scheduler</a></td><td><span class="badge m-prod">生产级</span></td><td>Run:ai 调度器，2025 由 NVIDIA 开源。DRF、层级队列、gang scheduling</td><td>集群编排层参考。<b>注意它本身不做任何隔离</b>，隔离能力全靠下游插件</td></tr>
+<tr><td><a href="https://github.com/volcano-sh/volcano" class="repo">volcano-sh/volcano</a></td><td><span class="badge m-prod">生产级</span></td><td>K8s 批调度器，vGPU 插件基于 HAMi-core</td><td>同上，编排层对照组</td></tr>
+<tr><td><a href="https://github.com/hao-ai-lab/MuxServe" class="repo">hao-ai-lab/MuxServe</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ICML'24（UCSD）。基于 MPS 的 SM 粒度多 LLM 空间复用 + 时间复用，ADBS 算法</td><td><b>多模型共享单卡的直接对照组</b>，也是目前少数真的按 SM 分配的 LLM 侧实现</td></tr>
+<tr><td><a href="https://github.com/efeslab/Nanoflow" class="repo">efeslab/Nanoflow</a></td><td><span class="badge m-art">论文 artifact</span></td><td>OSDI'25（UW）。nano-batch + 算子按功能单元静态分区，达理论峰值 50–72%</td><td>设备内并行的样板。后继 <a href="https://github.com/uw-syfi/DynaFlow" class="repo">uw-syfi/DynaFlow</a>（MLSys'26）已改用 streams + green contexts，更值得跟</td></tr>
+<tr><td><a href="https://github.com/microsoft/vattention" class="repo">microsoft/vattention</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ASPLOS'25（MSR India）。用 CUDA 虚拟内存做动态 KV 分配，不依赖 PagedAttention</td><td>显存管理的另一条技术路线，和 kvcached 是同一问题的两种解法，适合放在一起对比</td></tr>
+</tbody></table></div>
+
+<h2 id="s4"><span class="num">04</span>模拟器与建模工具</h2>
+<div class="note bad"><b>先看清楚边界：</b>这一层的工具<b>只覆盖「集群/请求级」，不覆盖「单 GPU 内 SM 争用」</b>。Vidur 把 GPU 当黑盒（profile + 回归预测算子耗时），明确不建模并发 kernel 干扰；2026 年最新的集群仿真工作（如 Revati 的 time-warp 仿真）也<b>主动声明不建模 GPU 内部争用</b>。所以：做并行策略搜索，模拟器是杠杆；做细粒度算力调度，模拟器帮不上忙。</div>
+<div class="tblwrap"><table>
+<colgroup><col style="width:24%"><col style="width:11%"><col style="width:31%"><col style="width:34%"></colgroup>
+<thead><tr><th>仓库</th><th>成熟度</th><th>是什么</th><th>你该拿它做什么</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/microsoft/vidur" class="repo">microsoft/vidur</a></td><td><span class="badge m-act">活跃研究</span></td><td>MLSys'24。算子级 profiling + 预测模型，误差 &lt;9%；Vidur-Search 1 CPU-hour 替代 42K GPU-hours</td><td><b>并行配置搜索的核心杠杆。</b>先在小集群标定，再用它外推——这套「校准 + 外推」方法论能挡掉大半「你没有大集群」的质疑</td></tr>
+<tr><td><a href="https://github.com/casys-kaist/LLMServingSim" class="repo">casys-kaist/LLMServingSim</a></td><td><span class="badge m-act">活跃研究</span></td><td>迭代级 HW/SW 协同仿真，可插拔加速器后端；2.0 扩展到异构与分离式，误差 &lt;14.7%</td><td>异构硬件 / 分离式架构的交叉验证。做自定义加速器研究时优于 Vidur</td></tr>
+<tr><td><a href="https://github.com/aliyun/SimAI" class="repo">aliyun/SimAI</a></td><td><span class="badge m-act">活跃研究</span></td><td>NSDI'25（阿里）。SimCCL 拦截 NCCL 仿真集合通信，RoCEv2 fat-tree；1024 GPU 端到端偏差 &lt;4%</td><td><b>网络侧仿真的首选。</b>注意它的 EP 建模假设 token 均衡分布（非真实 gating）——<b>这个假设本身就是个可以攻的 gap</b></td></tr>
+<tr><td><a href="https://github.com/astra-sim/astra-sim" class="repo">astra-sim/astra-sim</a></td><td><span class="badge m-act">活跃研究</span></td><td>分层网络 + 分离式系统建模，训练导向</td><td><b>不要直接用来做推理研究</b>（被 SimAI 测得节点间偏差 51–75%）。一般只作为网络仿真后端复用</td></tr>
+<tr><td><a href="https://github.com/Mutinifni/splitwise-sim" class="repo">Mutinifni/splitwise-sim</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ISCA'24 配套的离散事件集群模拟器，建模阶段拆分与异构 GPU 池</td><td>功能基础但代码简洁，<b>适合当自己写模拟器的 fork 起点</b></td></tr>
+<tr><td><a href="https://github.com/Thesys-lab/Helix-ASPLOS25" class="repo">Thesys-lab/Helix-ASPLOS25</a></td><td><span class="badge m-art">论文 artifact</span></td><td>ASPLOS'25（CMU）。异构 GPU + 网络下的 max-flow 放置/调度，附带自身模拟器</td><td>异构集群放置问题的对照组。注意与 NVIDIA 的 Helix Parallelism 无关</td></tr>
+<tr><td><a href="https://github.com/llm-d/llm-d-inference-sim" class="repo">llm-d/llm-d-inference-sim</a></td><td><span class="badge m-act">活跃研究</span></td><td>无 GPU 情况下模拟 vLLM 的请求/响应行为</td><td><b>只用来测试路由/编排代码的正确性</b>，没有性能保真度，不能用于性能研究</td></tr>
+<tr><td><a href="https://github.com/accel-sim/accel-sim-framework" class="repo">accel-sim/accel-sim-framework</a></td><td><span class="badge m-act">活跃研究</span></td><td>ISCA'20。cycle 级 GPU 模拟，验证到 Kepler/Pascal/Volta/Turing，平均误差 15%</td><td><b>只有提出新硬件机制、投架构会议时才用。</b>没有 Hopper/Blackwell 验证，速度约 12.5 KIPS（比真机慢 5–6 个数量级），跑不动完整 LLM decode</td></tr>
+<tr><td><a href="https://github.com/PrincetonUniversity/LLMCompass" class="repo">PrincetonUniversity/LLMCompass</a></td><td><span class="badge m-act">活跃研究</span></td><td>ISCA'24。面向<b>假想硬件</b>设计空间探索的分析式框架</td><td>做加速器架构设计探索。<b>不做 SM 级共享建模</b>，与调度研究不是一个抽象层</td></tr>
+<tr><td><a href="https://github.com/NVlabs/NVBit" class="repo">NVlabs/NVBit</a></td><td><span class="badge m-prod">生产级</span></td><td>MICRO'19。<b>真实硬件上的</b>动态二进制插桩框架</td><td><b>做细粒度研究的关键工具。</b>采 kernel trace、观测 SM 落位，是 Accel-Sim 和各类干扰研究的标准数据来源</td></tr>
+</tbody></table></div>
+
+<h2 id="s5"><span class="num">05</span>负载、Trace 与评测</h2>
+<div class="tblwrap"><table>
+<colgroup><col style="width:24%"><col style="width:11%"><col style="width:31%"><col style="width:34%"></colgroup>
+<thead><tr><th>仓库</th><th>成熟度</th><th>是什么</th><th>你该拿它做什么</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/alibaba/ServeGen" class="repo">alibaba/ServeGen</a></td><td><span class="badge m-act">活跃研究</span></td><td>NSDI'26。基于阿里 2025 年 1–4 月 <b>35.4 亿请求、12 模型、万级 GPU</b> 的生产数据</td><td><b>2026 年做 serving 实验的首选负载生成器。</b>它证明了 ShareGPT+Poisson 会让容量规划低估 50%</td></tr>
+<tr><td><a href="https://github.com/Azure/AzurePublicDataset" class="repo">Azure/AzurePublicDataset</a></td><td><span class="badge m-prod">生产级</span></td><td>Azure LLM Inference Trace 2023/2024</td><td>最广泛使用的基线 trace，<b>必须包含</b>以便与 DistServe/Sarathi/Vidur 等已有工作对齐</td></tr>
+<tr><td><a href="https://github.com/HPMLL/BurstGPT" class="repo">HPMLL/BurstGPT</a></td><td><span class="badge m-act">活跃研究</span></td><td>529 万真实 ChatGPT 请求、4+ 个月、2 个模型</td><td>专门测流量突发性（burstiness）下的表现</td></tr>
+<tr><td><a href="https://github.com/kvcache-ai/Mooncake" class="repo">Mooncake trace</a></td><td><span class="badge m-prod">生产级</span></td><td>Kimi 真实生产 trace，含 cache 命中率（最高 50%）</td><td><b>做 KV 复用研究必备</b>——其它 trace 都没有 cache 命中率信息</td></tr>
+<tr><td><a href="https://github.com/ai-dynamo/aiperf" class="repo">ai-dynamo/aiperf</a></td><td><span class="badge m-prod">生产级</span></td><td>NVIDIA GenAI-Perf 的继任项目，2026 仍活跃迭代</td><td>标准化性能测量。<b>优先用它而非自制脚本</b>，避免 coordinated omission 类的测量偏差</td></tr>
+<tr><td><a href="https://github.com/NVIDIA/nccl-tests" class="repo">NVIDIA/nccl-tests</a></td><td><span class="badge m-prod">生产级</span></td><td>all-reduce / all-gather 带宽延迟基准</td><td><b>第一周就该跑。</b>把集群真实拓扑带宽测出来存档，后面所有模拟器标定都要用</td></tr>
+<tr><td><a href="https://github.com/Ying1123/VTC-artifact" class="repo">Ying1123/VTC-artifact</a></td><td><span class="badge m-art">论文 artifact</span></td><td>OSDI'24。Virtual Token Counter 公平调度，2× 紧上界</td><td><b>做多租户算力配额时的关键对照组</b>——你要证明的正是「token 公平 ≠ 算力保证」</td></tr>
+</tbody></table></div>
+
+<h2 id="s6"><span class="num">06</span>论文 artifact：只作对照组，不要长期开发</h2>
+<div class="tblwrap"><table>
+<colgroup><col style="width:30%"><col style="width:14%"><col style="width:56%"></colgroup>
+<thead><tr><th>仓库</th><th>论文</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/LLMServe/DistServe" class="repo">LLMServe/DistServe</a></td><td>OSDI'24</td><td>P/D 分离的<b>标准对照组</b>，也是 goodput 指标框架的出处。做分离式架构必须对比它</td></tr>
+<tr><td><a href="https://github.com/microsoft/sarathi-serve" class="repo">microsoft/sarathi-serve</a></td><td>OSDI'24</td><td>Chunked prefill 原型。现在虽已进各大框架，但要做纯净对比仍需它</td></tr>
+<tr><td><a href="https://github.com/heheda12345/Jenga-SOSP25-AE" class="repo">heheda12345/Jenga-SOSP25-AE</a></td><td>SOSP'25</td><td>层异构模型（Mamba+Transformer 混合）的显存分配器。AE 徽章齐全，复现容易</td></tr>
+<tr><td><a href="https://github.com/FlexLLM/artifact" class="repo">FlexLLM/artifact</a></td><td>NSDI'26</td><td>推理与微调的 token 级共服务。做「多任务共享算力」的最新对照组</td></tr>
+<tr><td><a href="https://github.com/llm-db/llmstation" class="repo">llm-db/llmstation</a></td><td>ATC'25</td><td>把 PEFT 反向传播转成可挂起的 coroutine tasklet，挂起点细到 operator 级。<b>和 FlexLLM 是同一问题的两种解法</b></td></tr>
+<tr><td><a href="https://github.com/S-LoRA/S-LoRA" class="repo">S-LoRA/S-LoRA</a> · <a href="https://github.com/punica-ai/punica" class="repo">punica-ai/punica</a></td><td>MLSys'24</td><td>多 LoRA 服务的两个经典实现，做多租户共享时的必比基线</td></tr>
+<tr><td><a href="https://github.com/SymbioticLab/Salus" class="repo">SymbioticLab/Salus</a> · <a href="https://github.com/uwsampl/nexus" class="repo">uwsampl/nexus</a></td><td>MLSys'20 / SOSP'19</td><td>细粒度 GPU 共享与 GPU lane 打包的<b>历史对照组</b>。代码已老，读思想为主</td></tr>
+<tr><td><a href="https://github.com/GradientHQ/parallax" class="repo">GradientHQ/parallax</a></td><td>arXiv'25</td><td>WAN 去中心化推理：两阶段放置 + 动态路径选择。做异构/去中心化方向的现成起点</td></tr>
+</tbody></table></div>
+
+<h2 id="s7"><span class="num">07</span>如果现在就要动手：最小起步栈</h2>
+<div class="card">
+<p class="lede" style="margin-top:0">按你两个方向分别给一套。<b>都只需要你手上已有的资源</b>。</p>
+<h3 style="font-size:16px;margin:18px 0 4px">方向 A · 并行策略 / 分布式调度</h3>
+<div class="stack">
+  <div class="step"><div class="n">1</div><div><div class="t">vLLM + nccl-tests + AzurePublicDataset</div><div class="b">拉起基线，测出集群真实拓扑带宽存档，跑通标准 trace。第一周。</div></div></div>
+  <div class="step"><div class="n">2</div><div><div class="t">加入 ServeGen</div><div class="b">换掉 ShareGPT+Poisson，主结果用真实负载分布。这一步决定你的结论是否站得住。</div></div></div>
+  <div class="step"><div class="n">3</div><div><div class="t">Vidur 标定 + 外推</div><div class="b">用第 1 步的实测数据标定，报出「模拟 vs 实测」误差曲线，获得讲大规模故事的合法性。</div></div></div>
+  <div class="step"><div class="n">4</div><div><div class="t">Mooncake 或 vLLM KVConnector</div><div class="b">做 P/D 分离实验，对照组用 DistServe。</div></div></div>
+</div>
+<h3 style="font-size:16px;margin:22px 0 4px">方向 B · 细粒度算力调度</h3>
+<div class="stack">
+  <div class="step"><div class="n">1</div><div><div class="t">精读 BulletServe + kvcached</div><div class="b">前者是 SM 动态分配的完整样板（MPS + libsmctrl），后者是这个方向唯一的生产级实现。<b>一天能读完，能省你两周。</b></div></div></div>
+  <div class="step"><div class="n">2</div><div><div class="t">FlashInfer green_ctx + 单卡</div><div class="b">Green Context 划分 SM 跑 prefill/decode 共置，先复现出公开报告的 +34% 量级。<b>单卡就够。</b></div></div></div>
+  <div class="step"><div class="n">3</div><div><div class="t">NVBit + Nsight Systems</div><div class="b">测「名义 SM 份额 vs 实测有效算力达成率」——这是本方向的核心指标，也是区分「分配」与「保证」的唯一量化方式。</div></div></div>
+  <div class="step"><div class="n">4</div><div><div class="t">Orion / Tally 当对照组，VTC 当反例</div><div class="b">Orion 和 Tally 是干扰隔离的标准 baseline；VTC 用来证明 token 公平在算力密度不均的租户组合下会失效。</div></div></div>
+</div>
+</div>
+
+<div class="note"><b>核验说明：</b>BulletServe（53 stars，确认使用 MPS + libsmctrl）、kvcached（1.1k stars，2026-04 有 v0.1.5 发布）、Tally（12 stars，296 commits，含 tally-bench 复现仓库）为本次直接抽查确认。其余仓库地址来自论文原文与官方文档引用，<b>成熟度分档为定性判断</b>（依据调研中确认的版本发布节奏与工业采用情况），不是精确的活跃度统计——沙箱环境无法批量访问 GitHub API，因此<b>没有编造任何星标或提交数字</b>。libsmctrl 的仓库地址请从 RTAS'23 论文中获取（UNC 自托管，非 GitHub 主站）。</div>
+
+<footer>
+开源代码清单 · 整理于 2026-07-26 · 分布式推理并行化 + 细粒度 GPU 算力调度调研的配套<br>
+使用前建议先确认仓库最近提交时间与 CUDA 版本要求——论文 artifact 类项目常锁死在特定环境。
+</footer>
+</div>
+
+<script>
+const btn=document.getElementById('themeBtn');
+btn.addEventListener('click',()=>{
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  btn.textContent=dark?'切换深色':'切换浅色';
+});
+if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.setAttribute('data-theme','dark');btn.textContent='切换浅色';}
+</script>
+</body>
+</html>

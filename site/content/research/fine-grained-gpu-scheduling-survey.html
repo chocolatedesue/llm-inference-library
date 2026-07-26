@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>细粒度 GPU 算力调度 · 调研报告（分布式推理续篇）</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --page:#f9f9f7;
+  --ink-1:#0b0b0b; --ink-2:#52514e; --ink-3:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-400:#3987e5; --seq-550:#1c5cab; --seq-700:#0d366b;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-1:#1a1a19; --page:#0d0d0d;
+  --ink-1:#ffffff; --ink-2:#c3c2b7; --ink-3:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --seq-100:#184f95; --seq-250:#1c5cab; --seq-400:#256abf; --seq-550:#3987e5; --seq-700:#86b6ef;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink-1);
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 120px}
+header.hero{padding:64px 0 36px;border-bottom:1px solid var(--grid)}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.25;margin:0 0 12px;letter-spacing:-.02em}
+.sub{color:var(--ink-2);font-size:17px;max-width:76ch;margin:0}
+.meta{margin-top:20px;color:var(--ink-3);font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+h2{font-size:26px;margin:64px 0 6px;letter-spacing:-.01em;scroll-margin-top:70px}
+h2 .num{color:var(--ink-3);font-variant-numeric:tabular-nums;margin-right:12px;font-weight:400}
+h3{font-size:18px;margin:34px 0 8px}
+h4{font-size:15px;margin:20px 0 6px}
+p{margin:10px 0}
+.lede{color:var(--ink-2);max-width:80ch}
+a{color:var(--s1);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+code{background:var(--surface-1);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.86em}
+nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--page) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--grid)}
+nav.toc .inner{max-width:1180px;margin:0 auto;padding:9px 24px;display:flex;gap:6px;overflow-x:auto;align-items:center}
+nav.toc a{font-size:12.5px;color:var(--ink-2);white-space:nowrap;padding:4px 9px;border-radius:6px;border:none}
+nav.toc a:hover{background:var(--surface-1);color:var(--ink-1)}
+.theme-btn{margin-left:auto;flex:none;font-size:12px;color:var(--ink-2);background:var(--surface-1);
+  border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:18px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.tile .k{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:2px 0 4px;line-height:1.25}
+.tile .d{font-size:13px;color:var(--ink-2);line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+th{text-align:left;font-weight:600;color:var(--ink-2);font-size:12px;text-transform:uppercase;
+  letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--axis)}
+td{padding:9px 10px;border-bottom:1px solid var(--grid);vertical-align:top;line-height:1.6}
+tr:hover td{background:color-mix(in srgb,var(--surface-1) 70%,var(--grid))}
+.tblwrap{overflow-x:auto;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:4px 14px 10px}
+.tblwrap table{min-width:900px;table-layout:fixed}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2px 8px;border-radius:20px;
+  border:1px solid var(--border);color:var(--ink-2);background:var(--surface-1);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}.c4{background:var(--s4)}
+.c5{background:var(--s5)}.c6{background:var(--s6)}.c7{background:var(--s7)}.c8{background:var(--s8)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:5px;white-space:nowrap}
+.b-hard{background:var(--good);color:#fff}
+.b-mix{background:var(--warn);color:#0b0b0b}
+.b-soft{background:var(--grid);color:var(--ink-2)}
+.b-none{background:transparent;color:var(--ink-3);border:1px solid var(--border)}
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 6px;align-items:center}
+.filters button{font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface-1);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.filters button[aria-pressed="true"]{background:var(--ink-1);color:var(--page);border-color:var(--ink-1)}
+.filters button[aria-pressed="true"] .dot{outline:1.5px solid var(--page)}
+
+/* granularity ladder */
+.ladder{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin:20px 0}
+.rung{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:start;padding:9px 0;border-bottom:1px solid var(--grid)}
+.rung:last-child{border-bottom:none}
+.rung .lv{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.rung .bar{width:5px;border-radius:3px;height:20px;flex:none}
+.rung .sys{font-size:13px;color:var(--ink-2)}
+.rung .sys b{color:var(--ink-1);font-weight:600}
+.g0{background:var(--grid)}.g1{background:var(--seq-100)}.g2{background:var(--seq-250)}
+.g3{background:var(--seq-400)}.g4{background:var(--seq-550)}.g5{background:var(--seq-700)}
+.gap{border-left:3px solid var(--s2);padding:2px 0 2px 16px;margin:22px 0}
+.gap .gh{font-weight:600;font-size:16px;margin-bottom:2px}
+.gap .why{color:var(--ink-2);font-size:13.5px}
+.gap .how{font-size:13.5px;margin-top:6px;background:var(--surface-1);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px}
+.note{background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--warn);
+  border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13.5px;color:var(--ink-2)}
+.note b{color:var(--ink-1)}
+.ok{border-left-color:var(--good)}
+.bad{border-left-color:var(--crit)}
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin:5px 0;color:var(--ink-2)}
+li b,li strong{color:var(--ink-1)}
+.small{font-size:12.5px;color:var(--ink-3)}
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--grid);color:var(--ink-3);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<nav class="toc"><div class="inner">
+  <a href="#s1">直接回答</a>
+  <a href="#s2">机制层</a>
+  <a href="#s3">粒度阶梯</a>
+  <a href="#s4">论文库</a>
+  <a href="#s5">LLM 侧</a>
+  <a href="#s6">断裂点</a>
+  <a href="#s7">Gap</a>
+  <a href="#s8">实验设计</a>
+  <button class="theme-btn" id="themeBtn">切换深色</button>
+</div></nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <h1>细粒度 GPU 算力调度<br>——不是分「几块卡」，而是分「多少算力」</h1>
+  <p class="sub">上一份分布式推理调研的续篇。梳理从硬件分区机制（MIG / MPS / Green Context / SM masking）到系统层调度（REEF / Orion / LithOS / Bullet）再到 LLM serving 侧的完整链条，并回答一个关键问题：<b>到底有没有人在「保证一定量算力」的语义下做调度？</b></p>
+  <div class="meta"><span>调研日期 2026-07-26</span><span>50+ 篇系统论文与官方文档</span><span>续：分布式推理并行化报告</span></div>
+</header>
+
+<!-- 1 -->
+<h2 id="s1"><span class="num">01</span>先直接回答你的问题</h2>
+<p class="lede">有，而且这是一条相当成熟的研究脉络——但<b>「保证算力」和「细粒度调度」是两件常被混为一谈的事，前者远比后者稀缺。</b>调研结论可以压缩成三句话：</p>
+
+<div class="grid3" style="margin-top:20px">
+  <div class="tile"><div class="k">结论一</div><div class="v">机制早已存在</div><div class="d">SM 级切分的硬件/运行时原语齐全：MIG（硬）、MPS 线程百分比、CUDA Green Context（12.4+，SM 数粒度）、libsmctrl（TPC 掩码）。<b>底层不缺手段。</b></div></div>
+  <div class="tile"><div class="k">结论二</div><div class="v">绝大多数是<br>「隔离」不是「保证」</div><div class="d">REEF / Orion / Paella / TGS / Tally 等主流系统本质都是<b>优先级 + 干扰最小化</b>，只承诺高优先级任务不被拖慢，<b>不对任何一方承诺算力下限</b>。</div></div>
+  <div class="tile"><div class="k">结论三</div><div class="v">LLM 侧断层明显</div><div class="d">单卡内已有人按 SM 分（POD-Attention、Bullet、MuxServe）；但一旦跨到<b>多租户/多请求</b>，全部退化成「显存字节 / token 计数 / 整卡数」。<b>这就是空白区。</b></div></div>
+</div>
+
+<div class="note"><b>一句话概括你要找的东西：</b>真正意义上「保证 X 算力」的工作，目前只存在于<b>实时系统社区</b>（ECRTS/RTAS，有可证明的界）和<b>刚刚出现的 LithOS</b>（SOSP'25，TPC quota + work-conserving stealing）。在 LLM serving 领域，<b>还没有任何一篇论文把「给租户 A 保证 30% 算力」当作一等公民的资源单位</b>——这正是第 7 节列出的 gap 所在。</div>
+
+<!-- 2 -->
+<h2 id="s2"><span class="num">02</span>机制层：能用来切算力的原语</h2>
+<p class="lede">这一层决定了你的系统<b>最强能做到什么保证</b>。关键区分是 <span class="badge b-hard">HARD</span>（硬件强制，物理隔离）与 <span class="badge b-soft">SOFT</span>（尽力而为，可被争用穿透）。很多论文把 MPS 的 <code>ACTIVE_THREAD_PERCENTAGE</code> 当作硬配额来用，这是<b>不成立的</b>。</p>
+
+<div class="tblwrap">
+<table>
+<colgroup><col style="width:15%"><col style="width:11%"><col style="width:20%"><col style="width:14%"><col style="width:40%"></colgroup>
+<thead><tr><th>机制</th><th>隔离强度</th><th>分区对象</th><th>粒度</th><th>关键事实与限制</th></tr></thead>
+<tbody>
+<tr><td><b>MIG</b><br><span class="small">A100/H100/H200/B200</span></td><td><span class="badge b-hard">HARD</span></td><td>SM + L2 + 显存带宽 + 显存 + 拷贝引擎，全维度物理分区</td><td>预定义 profile，最细 1/7（Blackwell 部分配置 1/8）</td><td>唯一真正的硬件级强隔离，含 fault isolation。代价：<b>重配置需 GPU reset</b>（要停掉所有持句柄进程）；<b>跨实例不支持 NVLink P2P，NCCL 不支持 MIG</b> —— 所以 MIG 实例基本无法参与分布式推理的集合通信。这条限制对你的方向很关键。</td></tr>
+<tr><td><b>MPS</b><br><code>ACTIVE_THREAD_PERCENTAGE</code></td><td><span class="badge b-mix">混合</span></td><td>SM 线程并发配额；Volta+ 有独立虚拟地址空间</td><td>百分比（软配额）</td><td>NVIDIA 官方措辞是 "provisioning for QoS"，<b>是上限而非保证</b>，client 设置只能比 daemon 更紧。显存地址隔离是硬的，但 <b>fault isolation 仍是已知弱点</b>（NVIDIA 论坛已承认）——MPS server 崩溃会带走所有 client。</td></tr>
+<tr><td><b>CUDA Green Context</b><br><span class="small">CUDA 12.4+ driver API<br>13.1 起有 runtime API</span></td><td><span class="badge b-soft">SOFT</span></td><td>SM 数量 + work queue；<b>L2 与显存带宽仍全卡共享</b></td><td>SM 粒度；Hopper 上须为 <b>8 的倍数</b></td><td><b>目前最值得关注的原语。</b>官方明确写 "concurrent execution is not guaranteed"，只保证分到的 SM 数量这个静态描述。实测坑：decode kernel 大量读显存会冲刷 L2，反过来拖慢共享芯片的 compute-bound kernel。PyTorch 2.12+ 有 <code>torch.cuda.green_contexts</code>（Beta）；<b>FlashInfer 已有成熟 <code>green_ctx</code> 模块</b>；vLLM/SGLang 尚未作为稳定特性发布。</td></tr>
+<tr><td><b>libsmctrl</b><br><span class="small">RTAS 2023, UNC</span></td><td><span class="badge b-soft">SOFT</span></td><td>TPC 掩码（篡改 TMD 的 <code>SM_DISABLE_MASK</code>）</td><td>TPC 级</td><td>纯用户态、不需 root、不改源码。支持 CC 3.5–8.9；<b>Hopper（CC 9.0）起掩码位与软件可见 TPC ID 不再一一对应</b>，Blackwell 支持情况未验证。论文自陈：贪心 block 分发 + task slot 耗尽仍会让无关分区互相阻塞 —— <b>不是硬隔离</b>。不兼容 CUDA Graphs / Dynamic Parallelism。</td></tr>
+<tr><td><b>Stream Priority / <br>Persistent Kernel</b></td><td><span class="badge b-none">无保证</span></td><td>调度顺序 / 软件占位</td><td>无固定粒度</td><td>Stream priority 只影响 block 派发顺序，<b>不预留 SM</b>；persistent kernel（如 CUTLASS Stream-K）是用户态「占坑」技巧，其它进程的 kernel 仍可能被派到同一 SM。</td></tr>
+<tr><td><b>AMD MI300X</b><br>SPX / DPX / CPX</td><td><span class="badge b-hard">HARD</span></td><td>XCD（chiplet）级，配 NPS1/2/4 决定 HBM 分组</td><td>1 / 2 / 8 分</td><td>不需 Hypervisor，驱动层生效。<b>但重启或卸载 amdgpu 驱动后自动恢复 SPX</b>，不像 MIG 那样持久。另有 CU masking（软）对应 libsmctrl。</td></tr>
+<tr><td><b>K8s 时间片</b><br><span class="small">nvidia device-plugin</span></td><td><span class="badge b-soft">SOFT</span></td><td>GPU 时间片</td><td>副本数</td><td>官方文档原话：<b>replica 之间没有显存隔离也没有故障隔离</b>。只是均分时间片，最弱的一档。</td></tr>
+<tr><td><b>HAMi / Volcano-vGPU</b></td><td><span class="badge b-mix">混合</span></td><td>用户态 CUDA API 劫持（<code>ld.so.preload</code>）</td><td>显存 MB / 算力 %</td><td>显存是<b>真硬限</b>（拦截 <code>cuMemAlloc</code>，超额直接返回 OOM）；算力是<b>令牌桶 + 后台闭环调节</b>的软限速（耗尽则 nanosleep），短时仍会超/欠配。理论上可被绕过（直接调用未 hook 的符号）。</td></tr>
+<tr><td><b>阿里云 cGPU</b></td><td><span class="badge b-mix">偏 HARD</span></td><td>内核态驱动层拦截显存与算力</td><td>GiB / 百分比</td><td>下沉到内核驱动而非用户态 hook，比 HAMi 更难绕过，但仍是软件实现而非物理电路切分。</td></tr>
+<tr><td><b>KAI Scheduler</b><br><span class="small">Run:ai，2025 由 NVIDIA 开源</span></td><td><span class="badge b-none">不提供</span></td><td>纯编排层（DRF、层级队列、gang scheduling）</td><td>—</td><td><b>本身不做任何隔离</b>，隔离能力完全取决于下游委托的 GPU Operator（时间片 / MIG）。选型时容易误判的一个点。</td></tr>
+</tbody></table>
+</div>
+
+<div class="note ok"><b>选型建议（针对你的研究）：</b>如果要做「保证算力」的系统研究，<b>Green Context 是当下最合适的载体</b>——SM 粒度、有官方 API、PyTorch/FlashInfer 已有支持、能进 CUDA Graph。它的 SOFT 属性恰恰是研究机会：<b>把「分到 N 个 SM」变成「保证 N 个 SM 的有效算力」，中间隔着 L2 与显存带宽的争用，这段路没人铺完。</b></div>
+
+<!-- 3 -->
+<h2 id="s3"><span class="num">03</span>粒度阶梯：现有系统各站在哪一级</h2>
+<p class="lede">从粗到细排开，可以清楚看到「大家都在往下走，但走到 SM 级之后就分岔了」。越靠下的层级，越少有系统真正触达硬件寄存器。</p>
+
+<div class="ladder">
+  <div class="rung"><div class="lv"><i class="bar g0"></i>整卡 / job 级</div>
+    <div class="sys"><b>Gandiva</b>（OSDI'18，job 迁移+时间片打包）· <b>ServerlessLLM</b>（OSDI'24，冷启动优化）· 绝大多数 K8s 调度器</div></div>
+  <div class="rung"><div class="lv"><i class="bar g1"></i>请求 / batch 级</div>
+    <div class="sys"><b>Clockwork</b>（OSDI'20，靠执行时间可预测性做准入控制，接近保证但保证的是「时间」不是「空间」）· <b>Shepherd</b>（NSDI'23）· <b>Nexus</b>（SOSP'19，ILP 打包进 GPU lane）· <b>Usher</b>（OSDI'24，干扰感知打包）</div></div>
+  <div class="rung"><div class="lv"><i class="bar g2"></i>Token 级</div>
+    <div class="sys"><b>Sarathi-Serve</b>（OSDI'24，chunked prefill 的 token 预算）· <b>VTC</b>（OSDI'24，token 公平队列）· <b>Aegaeon</b>（SOSP'25，token 边界抢占式模型切换，单卡容纳 7 个模型）· <b>FlexLLM</b>（NSDI'26，推理与微调 token 交错）· <b>ConServe</b>（token + layer 级抢占）</div></div>
+  <div class="rung"><div class="lv"><i class="bar g3"></i>Kernel / 算子级</div>
+    <div class="sys"><b>REEF</b>（OSDI'22，reset-based 微秒级抢占 + DKP）· <b>Orion</b>（EuroSys'24，感知 SM 需求的算子调度）· <b>Tally</b>（ASPLOS'25，block 级非侵入调度）· <b>Salus</b>（MLSys'20，快速 job 切换）· <b>NanoFlow</b>（OSDI'25，算子按功能单元静态分区）</div></div>
+  <div class="rung"><div class="lv"><i class="bar g4"></i>Thread block / CTA 级</div>
+    <div class="sys"><b>Paella</b>（SOSP'23，编译器插桩上报 block 落位，按 SM 空闲情况延迟提交）· <b>LithOS</b>（SOSP'25，kernel atomization：透明把 kernel 切成可调度 atom）· <b>POD-Attention</b>（ASPLOS'25，CTA 内查 SM ID 原子决定跑 prefill 还是 decode）</div></div>
+  <div class="rung"><div class="lv"><i class="bar g5"></i>SM / TPC 硬件级</div>
+    <div class="sys"><b>LithOS</b>（TPC 分配 + TPC stealing，<b>唯一明确给出 compute quota 语义的通用系统</b>）· <b>Bullet</b>（ASPLOS'26，SM masking 在 prefill/decode 间动态重分）· <b>GSLICE</b>（SoCC'20，MPS SM% 动态配额）· <b>Gpulet</b>（ATC'22，MPS 空间划分 + 干扰模型，SLO 违反 &lt;1%）· <b>MuxServe</b>（ICML'24，MPS SM 粒度多 LLM 共享）· <b>libsmctrl</b> / <b>Fractional GPUs</b>（机制层）</div></div>
+  <div class="rung"><div class="lv"><i class="bar g5"></i>Warp 级 / 可证明</div>
+    <div class="sys"><b>ECRTS'24 Predictable GPU Sharing</b>（实时锁协议 + 动态 resizing，<b>有可证明的容量损失界</b>）· <b>ECRTS'25 WCET bounding</b>（warp → thread block 的数学上界，Rodinia 上过估 8–16%）· UNC 实时组的 GPU 调度逆向工程系列</div></div>
+</div>
+<p class="small">注：Prism（OSDI'26）站在一个正交维度——<b>显存页级（2MB）</b>的 ballooning，论文明确说「计算共享已被 MIG/vGPU 研究充分，显存弹性共享才是空白」，所以它<b>有意不做算力分配</b>。这个立场本身值得你在 related work 里引用与反驳。</p>
+
+<!-- 4 -->
+<h2 id="s4"><span class="num">04</span>论文库：按类别筛选</h2>
+<div class="filters" id="filters"></div>
+<div class="tblwrap">
+<table id="ptable">
+  <colgroup><col style="width:20%"><col style="width:10%"><col style="width:11%"><col style="width:30%"><col style="width:12%"><col style="width:17%"></colgroup>
+  <thead><tr><th>系统</th><th>Venue</th><th>机构</th><th>机制</th><th>保证类型</th><th>粒度 / 标签</th></tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+<p class="small" id="tcount"></p>
+
+<!-- 5 -->
+<h2 id="s5"><span class="num">05</span>LLM serving 侧：谁真的在按 SM 分？</h2>
+<p class="lede">这是和你上一轮调研直接接上的部分。答案分成两半，<b>而这两半之间的落差就是最值得做的东西</b>。</p>
+
+<div class="grid2">
+<div class="card ok" style="border-left:3px solid var(--good)">
+<h4 style="margin-top:0">已经在做：单卡内、按「算子类型」分</h4>
+<ul>
+<li><b>POD-Attention</b>（ASPLOS'25，UW + MSR）— 单 kernel 融合 prefill 与 decode attention。每个 CTA 启动后由 leader thread <b>查硬件计数器拿到自己的 SM ID</b>，用原子操作动态决定跑 prefill 还是 decode。关键是它<b>对硬件如何把 CTA 映射到 SM 完全不敏感</b>——这是运行时绑定，不是静态假设。<a href="https://arxiv.org/abs/2410.18038">arXiv:2410.18038</a></li>
+<li><b>Bullet</b>（ASPLOS'26，中山大学）— <b>最直接命中你问题的一篇。</b>用 SM masking 在 prefill（layer 粒度）与 decode（step 粒度）之间<b>微秒级动态重分配 SM 数量</b>，配一个只需 18–30 次采样的 "SM-scaling roofline model" 预测不同 SM 预算下的延迟，同时满足 TTFT 与 TPOT 的 SLO。<a href="https://arxiv.org/abs/2504.19516">arXiv:2504.19516</a> · <a href="https://github.com/zejia-lin/BulletServe">已开源</a></li>
+<li><b>NanoFlow</b>（OSDI'25，UW）— 把 batch 拆成 nano-batch，把 GPU 功能单元（Tensor Core / CUDA Core / 显存带宽 / NVLink）<b>按算子类型分区</b>并流水重叠。注意它是<b>离线搜索出的静态配置</b>，不是运行时动态分配。后续 <b>DynaFlow</b>（MLSys'26）把它泛化为可编程调度框架，开始用 CUDA streams + green contexts 管并发。</li>
+<li><b>MuxServe</b>（ICML'24，UCSD）— 基于 MPS 做 <b>SM 粒度</b>的多 LLM 空间复用 + prefill/decode 时间复用，ADBS 算法动态分配，带公平性约束（归一化算力/显存消耗差需在 ε 内）。</li>
+<li><b>Green Context 实践</b>—— FlashInfer 的 <code>green_ctx</code> 已能按固定比例（如 P:D = 8:2）把 prefill / decode 分流到不同 SM 分区，公开案例报告 H200 上约 <b>+34%</b> 吞吐、消费级卡近 +60%，并显著收窄 ITL 分布。<b>但尚未进 vLLM/SGLang 主干。</b></li>
+</ul>
+</div>
+<div class="card bad" style="border-left:3px solid var(--crit)">
+<h4 style="margin-top:0">还没人做：跨「租户 / 请求」按算力分</h4>
+<p style="font-size:13.5px;color:var(--ink-2)">一旦从「prefill vs decode」跨到「租户 A vs 租户 B」，所有系统都退化到三种粒度之一：</p>
+<ul>
+<li><b>显存字节</b> — Prism（OSDI'26）的 ballooning、S-LoRA 的 unified paging</li>
+<li><b>token 计数</b> — VTC、Aegaeon、FlexLLM</li>
+<li><b>整卡 / 实例数</b> — ServerlessLLM 及绝大多数集群调度器</li>
+</ul>
+<h4>为什么 token 公平 ≠ 算力保证</h4>
+<p style="font-size:13.5px;color:var(--ink-2)">VTC（OSDI'24）值得单独辨析，因为它最容易被误认为已经解决了这个问题：</p>
+<ol style="font-size:13.5px">
+<li>它保证的是<b>相对公平</b>（两个 backlogged 客户端服务差异有 2× 紧上界），不是「你固定拿到 30% 算力」的<b>绝对下限</b>。</li>
+<li><b>token 数 ≠ FLOPs</b>。prefill token 与 decode token 的计算密度差一个数量级；同样的 token 计数在不同 batch 组成下对应的 SM 占用完全不同。VTC 从不核算底层 SM/TFLOPs。</li>
+<li>它是 <b>work-conserving 排队</b>（类似网络 fair queueing 的 virtual time），租户空闲时份额会被别人占走 —— 这与「预留给你、不用也不给别人」的 reservation 语义相反。</li>
+</ol>
+<p class="small">一句话：VTC 解决的是「队列里怎么排更公平」，不是「怎么把硬件切一块保证给你」。</p>
+</div>
+</div>
+
+<!-- 6 -->
+<h2 id="s6"><span class="num">06</span>核心断裂点：为什么「保证 X TFLOPs」这么难</h2>
+<p class="lede">这不是没人想到，而是有三个真实的技术障碍。把这三条讲清楚，本身就是一篇论文 introduction 的骨架。</p>
+<div class="grid3">
+<div class="tile"><div class="k">障碍一</div><div class="v" style="font-size:20px">SM 数 ≠ 有效算力</div><div class="d">Green Context 只切 SM 与 work queue，<b>L2 cache 与显存带宽仍是全卡共享</b>。分给你 32 个 SM，隔壁 decode kernel 一冲刷 L2，你的实际算力就掉了。<b>「分配量」到「保证量」之间隔着未被隔离的共享资源。</b></div></div>
+<div class="tile"><div class="k">障碍二</div><div class="v" style="font-size:20px">LLM 负载密度<br>本身不稳定</div><div class="d">推理的计算密度随 batch 组成（prefill/decode 比例、序列长度分布）剧烈波动，SM 数量到有效 TFLOPs 的映射不是常数。这正是 POD-Attention / Bullet <b>只敢在「算子类型」间分 SM、不敢在「租户」间分</b>的根本原因——算子的 compute/memory-bound 特征稳定可建模，跨租户负载不可预测。</div></div>
+<div class="tile"><div class="k">障碍三</div><div class="v" style="font-size:20px">硬保证的<br>那一档不能通信</div><div class="d">唯一的硬隔离 MIG <b>不支持跨实例 NVLink P2P，NCCL 也不支持 MIG</b>。这意味着<b>硬保证与分布式推理天然互斥</b>——想要 TP/EP，就只能退回软隔离。这条约束在文献里被讨论得远远不够。</div></div>
+</div>
+
+<!-- 7 -->
+<h2 id="s7"><span class="num">07</span>五个可攻的 Gap</h2>
+
+<div class="gap">
+<div class="gh">Gap A · 把「分到 N 个 SM」做成「保证 N 个 SM 的有效算力」</div>
+<div class="why">障碍一的正面攻击。Green Context 官方明说不保证并发，L2/带宽仍共享；ETH 的 <i>Understanding GPU Resource Interference One Level Deeper</i>（SoCC'25）刚刚把这层争用测清楚，但<b>还没有系统把「补偿这层争用」做进调度器</b>——即：观测到 L2 被冲刷导致有效算力下降后，动态补发 SM 或限制干扰方。这是一个定义清晰、baseline 明确的题目。</div>
+<div class="how"><b>怎么做：</b>单卡即可。Green Context 划分 + 用 <code>.cs</code>/evict-first cache hint 与 SM 补偿两条路线对比，指标是「名义 SM 份额 vs 实测有效 FLOPs 达成率」。这条曲线本身就是核心图。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap B · LLM serving 的多租户算力配额（最大的空白）</div>
+<div class="why">如第 5 节所述：<b>没有任何一篇论文把「保证租户 A 拿到 30% 算力」当作一等公民的资源单位</b>做准入控制与调度。LithOS（SOSP'25）在通用 ML 负载上做到了 TPC quota + work-conserving stealing，但<b>没有针对 LLM 的 prefill/decode 二相性</b>；Bullet 做到了 SM 动态分配，但分配对象是算子类型而非租户。<b>把 LithOS 的 quota 语义搬到 LLM 的两相负载上，是一个现成的缝。</b></div>
+<div class="how"><b>怎么做：</b>2 节点足够。在 vLLM/SGLang 上加一层 Green Context（或 libsmctrl）的租户配额层，用 ServeGen 生成多租户负载，对比 VTC（token 公平）与你的算力配额在「租户被邻居拖慢多少」上的差异。<b>关键实验：制造一个高 prefill 占比的恶意邻居，证明 token 公平失效而算力配额不失效。</b></div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap C · 硬保证与集合通信的互斥问题</div>
+<div class="why">障碍三。MIG 给硬隔离但断掉 NVLink P2P 与 NCCL；软隔离（MPS/Green Context）保住了通信但失去保证。<b>「既要分布式并行、又要算力保证」目前无解</b>，而这恰恰是多租户 LLM 集群的真实需求。文献里几乎没人正面处理这个矛盾。</div>
+<div class="how"><b>怎么做：</b>先做 measurement study：量化「Green Context 分区下 NCCL 集合通信的性能与隔离性」——分区是否会让 all-reduce 的 SM 占用越界？多租户同时 all-reduce 时干扰有多大？这个测量目前没有公开数据，做出来就有价值。需要 2+ 节点 RDMA。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap D · 算力配额的「可证明性」从实时社区搬过来</div>
+<div class="why">ECRTS'24 的 <i>Predictable GPU Sharing</i> 有可证明的容量损失界，ECRTS'25 有 warp→thread block 的 WCET 数学上界（Rodinia 上过估仅 8–16%）。<b>这套分析框架和系统社区几乎是两个平行宇宙</b>——系统论文谈 SLO 达成率（经验），实时论文谈可证明界（理论），没人把两者接起来。给 LLM 推理的 SM 配额一个可证明的下界，是个漂亮的交叉题。</div>
+<div class="how"><b>怎么做：</b>理论为主、实验为辅，对资源要求最低。风险是审稿口味——投 RTSS/ECRTS 接受度高于 OSDI。</div>
+</div>
+
+<div class="gap">
+<div class="gh">Gap E · 细粒度算力调度与 PD 分离 / EP 的联合设计</div>
+<div class="why">承接你上一轮调研：现在 PD 分离是<b>跨 GPU</b> 的（DistServe / Mooncake），而 POD-Attention / Bullet / Green Context 证明 PD 也可以在<b>单卡内按 SM</b> 分离。<b>那么最优的分离粒度到底在哪一层？</b>跨节点、跨卡、卡内 SM——这三层的选择边界没人系统研究过。同理，MoE 的 EP 与 SM 配额如何联合（专家负载不均 → 该给谁更多 SM）也是空的。</div>
+<div class="how"><b>怎么做：</b>这条最能和你已有的调研接上。在单节点 8 卡上，把「跨卡 PD 分离」与「卡内 SM 分离」做成同一套框架下的两个配置项，扫出相图。和上一份报告的 Gap 2（分/合判据）天然可以合并成一篇更完整的工作。</div>
+</div>
+
+<!-- 8 -->
+<h2 id="s8"><span class="num">08</span>这个方向的实验平台该怎么搭</h2>
+<div class="grid2">
+<div class="card">
+<h4 style="margin-top:0">最小可行栈</h4>
+<ol>
+<li><b>切分层</b>：CUDA Green Context（首选，有官方 API + PyTorch 2.12 Beta + FlashInfer 支持）；对照组用 MPS <code>ACTIVE_THREAD_PERCENTAGE</code> 与 MIG。<b>libsmctrl 仅在需要 TPC 级掩码且卡是 Ampere/Ada 时用</b>（Hopper 起语义已变）。</li>
+<li><b>服务层</b>：vLLM 或 SGLang + FlashInfer 后端（因为 FlashInfer 的 green_ctx 是现成的）。</li>
+<li><b>负载层</b>：ServeGen 生成多租户负载；必须包含<b>算力密度差异极大的租户组合</b>（长 prefill 租户 vs 纯 decode 租户），否则测不出 token 公平的失效。</li>
+<li><b>测量层</b>：Nsight Systems 看 kernel 在 SM 上的实际落位；DCGM / NVML 采 SM occupancy 与 L2 命中；nvbandwidth 标定带宽基线。</li>
+</ol>
+</div>
+<div class="card">
+<h4 style="margin-top:0">这个方向特有的指标</h4>
+<ul>
+<li><b>有效算力达成率</b> = 实测 FLOPs / 名义分配 SM 对应的理论 FLOPs。<b>这是本方向的核心指标</b>，也是区分「分配」与「保证」的唯一量化方式。</li>
+<li><b>隔离度</b>：邻居负载从空载升到满载时，受保护租户的延迟劣化倍数。MPS 与 Green Context 在这一项上会拉开差距。</li>
+<li><b>work-conserving 程度</b>：配额空闲时被其他租户利用的比例。LithOS 的 TPC stealing 就是在优化这一项——<b>保证与利用率的权衡曲线是核心图</b>。</li>
+<li><b>重配置开销</b>：Bullet 强调微秒级，MIG 是「需要 GPU reset」级。做动态分配必须报这个数。</li>
+</ul>
+<div class="note bad" style="margin-top:12px;font-size:13px"><b>常见坑：</b>用 MPS 的 <code>ACTIVE_THREAD_PERCENTAGE</code> 当硬配额来做 baseline 或结论。它是上限而非保证，且无故障隔离；如果你的实验结论建立在「MPS 给了我 50% 算力」上，审稿人会直接质疑。</div>
+</div>
+</div>
+
+<div class="note"><b>核验说明：</b>Bullet（ASPLOS 2026）已在 <a href="https://dl.acm.org/doi/10.1145/3779212.3790135">ACM DL</a> 与 <a href="https://github.com/zejia-lin/BulletServe">开源仓库</a>确认；LithOS（SOSP'25）、Aegaeon（SOSP'25）、Prism（OSDI'26）、FlexLLM（NSDI'26）均已在官方 accepted list 核验。需注意：<b>①</b> <b>Missile</b>（arXiv:2407.13996）仍为预印本，未见被顶会接收的证据；<b>②</b> <b>GSLICE 是 SoCC 2020 而非 ATC</b>，常被引错；<b>③</b> libsmctrl 对 Blackwell 的支持、vLLM/SGLang 是否已官方支持 Green Context，均未能确认；<b>④</b> 「iServe」这一系统未能检索到匹配论文。</div>
+
+<footer>
+细粒度 GPU 算力调度调研 · 数据截至 2026-07-26 · 分布式推理并行化报告续篇<br>
+主要来源：NVIDIA CUDA / MIG / MPS 官方文档、USENIX（OSDI/NSDI/ATC）、ACM DL（SOSP/ASPLOS/EuroSys/SoCC）、ECRTS/RTAS、arXiv 与各项目仓库。
+</footer>
+</div>
+
+<script>
+const TOPICS=[
+ {id:'mech', name:'机制 / 原语', cls:'c1'},
+ {id:'share',name:'通用 GPU 共享',cls:'c2'},
+ {id:'rt',   name:'实时 / 可证明',cls:'c3'},
+ {id:'llm',  name:'LLM serving',  cls:'c4'},
+ {id:'multi',name:'多模型 / 多租户',cls:'c5'},
+ {id:'model',name:'干扰建模',      cls:'c6'},
+];
+const G={hard:'<span class="badge b-hard">配额保证</span>',
+         prov:'<span class="badge b-mix">SLO 导向</span>',
+         best:'<span class="badge b-soft">尽力隔离</span>',
+         none:'<span class="badge b-none">仅机制</span>'};
+const P=[
+ {t:'LithOS: An Operating System for Efficient ML on GPUs',u:'https://arxiv.org/abs/2504.15465',v:'SOSP 2025',o:'CMU · Meta',d:'Kernel atomization：无需源码/PTX，透明把 kernel 切成可调度的最小 atom（用 prelude kernel 检查 thread block 索引区间）；TPC 级调度 + TPC stealing 保持 work-conserving。推理尾延迟对比 MPS 降 13×',g:G.hard,k:['share'],gr:'TPC / thread block'},
+ {t:'Bullet: Boosting GPU Utilization for LLM Serving via Dynamic Spatial-Temporal Orchestration',u:'https://arxiv.org/abs/2504.19516',v:'ASPLOS 2026',o:'中山大学',d:'SM masking 在 prefill（layer 粒度）与 decode（step 粒度）之间微秒级动态重分配；SM-scaling roofline 模型仅需 18–30 次采样即可预测不同 SM 预算下的延迟。已开源',g:G.prov,k:['llm','mech'],gr:'SM 数量（运行时）'},
+ {t:'POD-Attention: Unlocking Full Prefill-Decode Overlap',u:'https://arxiv.org/abs/2410.18038',v:'ASPLOS 2025',o:'UW · MSR India',d:'单 kernel 融合 prefill/decode attention，CTA 启动后由 leader thread 查硬件计数器拿 SM ID，原子操作动态决定跑哪一侧；对硬件 CTA→SM 映射不敏感',g:G.best,k:['llm'],gr:'CTA / SM'},
+ {t:'MuxServe: Flexible Spatial-Temporal Multiplexing for Multiple LLM Serving',u:'https://arxiv.org/abs/2404.02015',v:'ICML 2024',o:'UCSD Hao AI Lab',d:'基于 MPS 的 SM 粒度空间复用（按热度分组 LLM unit）+ prefill/decode 时间复用；ADBS 算法动态分配，带归一化算力/显存消耗的公平性约束',g:G.prov,k:['llm','multi'],gr:'SM 百分比（MPS）'},
+ {t:'NanoFlow: Towards Optimal Large Language Model Serving Throughput',u:'https://arxiv.org/abs/2408.12757',v:'OSDI 2025',o:'UW',d:'Intra-device parallelism：batch 拆成 nano-batch，把 Tensor Core / CUDA Core / 显存带宽 / NVLink 按算子类型分区并流水重叠。注意是离线搜索的静态配置',g:G.best,k:['llm'],gr:'算子 / 功能单元'},
+ {t:'DynaFlow (NanoFlow 后继)',u:'https://arxiv.org/abs/2605.21603',v:'MLSys 2026',o:'UW · 上海交大',d:'把 NanoFlow 的固定策略泛化为可编程调度框架，运行时在 overlap/fusion/split 间切换，兼容 CUDA Graphs，用 streams + green contexts 管并发资源',g:G.best,k:['llm','mech'],gr:'算子级'},
+ {t:'REEF: Microsecond-scale Preemption for Concurrent GPU-accelerated DNN Inferences',u:'https://www.usenix.org/conference/osdi22/presentation/han',v:'OSDI 2022',o:'上交 IPADS',d:'Reset-based kernel preemption（利用 DNN kernel 幂等性，kill + 清空 BE 队列，微秒级）+ Dynamic Kernel Padding（用 RT kernel 剩余 CU 塞入 BE thread block）',g:G.best,k:['share'],gr:'kernel / CU'},
+ {t:'Orion: Interference-aware, Fine-grained GPU Sharing for ML Applications',u:'https://dl.acm.org/doi/10.1145/3627703.3629578',v:'EuroSys 2024',o:'ETH Zurich',d:'拦截 CUDA/cuDNN/cuBLAS 调用进软件队列，基于 SM 需求 + 优先级轮询调度，不修改 CUDA runtime。two-tier：1 个高优先级 + 其余 best-effort',g:G.best,k:['share'],gr:'算子 / kernel'},
+ {t:'Paella: Low-latency Model Serving with Software-defined GPU Scheduling',u:'https://dl.acm.org/doi/10.1145/3600006.3613163',v:'SOSP 2023',o:'UPenn',d:'TVM 编译器插桩 kernel 实时上报 block 落位与完成；host 侧按 SM 空闲情况延迟提交 kernel，SRPT + deficit counter 调度',g:G.best,k:['share'],gr:'thread block 批（≤16）'},
+ {t:'Transparent GPU Sharing in Container Clouds for Deep Learning Workloads (TGS)',u:'https://www.usenix.org/conference/nsdi23/presentation/wu',v:'NSDI 2023',o:'北京大学',d:'在容器下方的 OS 层做自适应速率控制 + 透明统一内存，无需应用改造；production job 受保护，opportunistic job best-effort',g:G.best,k:['share'],gr:'OS 层速率控制'},
+ {t:'Tally: Non-Intrusive Performance Isolation for Concurrent DL Workloads',u:'https://dl.acm.org/doi/10.1145/3669940.3707214',v:'ASPLOS 2025',o:'—',d:'Block 级 GPU kernel 调度，非侵入式（不需重编译目标程序），拦截并重写 kernel launch 实现协同执行下的干扰控制',g:G.best,k:['share'],gr:'kernel block'},
+ {t:'GSLICE: Controlled Spatial Sharing of GPUs for a Scalable Inference Platform',u:'https://dl.acm.org/doi/10.1145/3419111.3421284',v:'SoCC 2020',o:'UC Riverside',d:'基于 MPS 的受控空间共享，动态调整每模型 SM 占比（kneepoint 分析），~100μs shadow-instance 切换实现无中断重配。注意常被误引为 ATC',g:G.prov,k:['share','multi'],gr:'SM 百分比'},
+ {t:'Serving Heterogeneous ML Models on Multi-Tenant GPUs (gpulet)',u:'https://www.usenix.org/conference/atc22/presentation/choi-seungbeom',v:'ATC 2022',o:'KAIST',d:'"gpulet" = 基于 MPS 的虚拟 GPU；三维搜索 batch size × 时间共享 × 空间共享，内建干扰预测模型',g:G.prov,k:['share','multi','model'],gr:'MPS 空间划分'},
+ {t:'AntMan: Dynamic Scaling on GPU Clusters for Deep Learning',u:'https://www.usenix.org/conference/osdi20/presentation/xiao',v:'OSDI 2020',o:'阿里巴巴',d:'协同调整 GPU 显存与算力使用，动态 scaling operator 弹性调度训练任务的资源占用',g:G.best,k:['share'],gr:'算子 / 迭代'},
+ {t:'Salus: Fine-Grained GPU Sharing Primitives for Deep Learning Applications',u:'https://arxiv.org/abs/1902.04610',v:'MLSys 2020',o:'Umich SymbioticLab',d:'定制 TF 执行引擎实现 fast job switching + 显存复用的细粒度共享原语',g:G.best,k:['share'],gr:'迭代 / session'},
+ {t:'Clockwork: Serving DNNs like Clockwork — Performance Predictability from the Bottom Up',u:'https://www.usenix.org/conference/osdi20/presentation/gujarati',v:'OSDI 2020',o:'MPI-SWS',d:'自底向上消除执行时间的不确定性，集中式调度器基于精确延迟 profile 做准入控制。保证的是「时间可预测性」而非空间资源量',g:G.prov,k:['share'],gr:'请求级'},
+ {t:'USHER: Holistic Interference Avoidance for Resource Optimized ML Inference',u:'https://www.usenix.org/conference/osdi24/presentation/shubha',v:'OSDI 2024',o:'—',d:'离线 profiling 建立干扰感知的资源需求模型，做全局跨请求资源打包',g:G.best,k:['share','model'],gr:'请求级打包'},
+ {t:'Nexus: A GPU Cluster Engine for Accelerating DNN-Based Video Analysis',u:'https://dl.acm.org/doi/10.1145/3341301.3359658',v:'SOSP 2019',o:'UW',d:'ILP 求解把多模型请求打包进 "GPU lanes"，batching-aware 调度',g:G.best,k:['share'],gr:'batch / lane'},
+ {t:'libsmctrl / Hardware Compute Partitioning on NVIDIA GPUs',u:'https://www.cs.unc.edu/~jbakita/rtas23.pdf',v:'RTAS 2023',o:'UNC',d:'篡改 Task MetaData 中未公开的 SM_DISABLE_MASK 位做 TPC 掩码；纯用户态、无需 root、不改源码。论文自陈仍有 task slot 争用导致的跨分区阻塞',g:G.none,k:['mech','rt'],gr:'TPC 掩码'},
+ {t:'Fractional GPUs: Software-based Compute and Memory Bandwidth Reservation',u:'https://github.com/sakjain92/Fractional-GPUs',v:'RTAS 2019',o:'CMU',d:'kernel 运行时自查 SM ID 主动让出非本分区 SM；显存侧用页面着色逆向内存控制器交织方式做带宽隔离。需改应用源码',g:G.prov,k:['mech','rt'],gr:'SM + 显存 channel'},
+ {t:'Predictable GPU Sharing in Component-Based Real-Time Systems',u:'https://drops.dagstuhl.de/entities/volume/LIPIcs-volume-298',v:'ECRTS 2024',o:'UNC',d:'实时锁协议 + 动态 resizing，在时间片式组件系统中安全共享 GPU 分区；给出可解析证明的容量损失界',g:G.hard,k:['rt'],gr:'组件级 GPU 分区'},
+ {t:'Bounding the WCET of a GPU Thread Block',u:'https://drops.dagstuhl.de/entities/volume/LIPIcs-volume-335',v:'ECRTS 2025',o:'—',d:'三阶段管道：单 warp 隔离分析 → warp 级干扰建模 → block 级合成，给出 GUB 数学上界。Rodinia/SGEMM 上过估 8–16%',g:G.hard,k:['rt'],gr:'warp → thread block'},
+ {t:'Aegaeon: Effective GPU Pooling for Concurrent LLM Serving on the Market',u:'https://ennanzhai.github.io/pub/sosp25-aegaeon.pdf',v:'SOSP 2025',o:'北大 · 阿里云',d:'token 级抢占式模型切换（在每个 token 生成步而非请求边界做决策），单卡容纳最多 7 个模型（MPS 类方案仅 2–3 个）；生产环境 1192→213 卡',g:G.prov,k:['llm','multi'],gr:'token 级'},
+ {t:'Prism: Unleashing GPU Sharing for Cost-Efficient Multi-LLM Serving',u:'https://arxiv.org/abs/2505.04021',v:'OSDI 2026',o:'UCLA/Berkeley/CMU 等多机构',d:'GPU memory ballooning：虚拟/物理显存解耦，2MB 页按需映射（kvcached driver）。论文明确表态「算力共享已被 MIG/vGPU 充分研究，显存弹性共享才是空白」——有意不做算力分配',g:G.prov,k:['llm','multi'],gr:'显存页（2MB）'},
+ {t:'FlexLLM: Token-Level Co-Serving of LLM Inference and Finetuning',u:'https://arxiv.org/abs/2402.18789',v:'NSDI 2026',o:'CMU · Purdue · Stanford 等',d:'把 PEFT 表示成挂在主干上的 bypass network，计算图融合到 token 级；hybrid scheduler 在同一 iteration 内交错推理与微调 token，高峰时瞬时节流微调',g:G.prov,k:['llm','multi'],gr:'token 级'},
+ {t:'LLMStation: Resource Multiplexing in Tuning and Serving LLMs',u:'https://www.usenix.org/conference/atc25/presentation/he-yongjun',v:'ATC 2025',o:'ETH Zurich · NUS',d:'把 PEFT 反向传播转成可挂起的 coroutine tasklet 与推理 iteration 交错；挂起点可细到 operator 级（backward graph 4000–10000 节点）',g:G.prov,k:['llm','multi'],gr:'iteration / operator'},
+ {t:'Fairness in Serving Large Language Models (VTC)',u:'https://arxiv.org/abs/2401.00588',v:'OSDI 2024',o:'UC Berkeley',d:'基于 token 计数成本函数的公平队列，保证两个 backlogged 客户端服务差异有 2× 紧上界且 work-conserving。注意：相对公平 ≠ 算力保证（详见第 5 节辨析）',g:G.prov,k:['llm','multi'],gr:'token 计数'},
+ {t:'dLoRA: Dynamically Orchestrating Requests and Adapters for LoRA Serving',u:'https://www.usenix.org/system/files/osdi24-wu-bingyang.pdf',v:'OSDI 2024',o:'北大 · 上海 AI Lab',d:'intra-replica 动态 batching（merged/unmerged 切换）+ inter-replica 请求-adapter 协同迁移（ILP 建模）',g:G.best,k:['multi'],gr:'iteration / replica'},
+ {t:'S-LoRA: Serving Thousands of Concurrent LoRA Adapters',u:'https://arxiv.org/abs/2311.03285',v:'MLSys 2024',o:'Berkeley · Stanford · Duke',d:'Unified paging 统一管理 adapter 权重与 KV cache 显存 + 定制 CUDA kernel 做异构批处理',g:G.best,k:['multi'],gr:'模型 / 显存页'},
+ {t:'AdaServe: SLO-Customized LLM Serving with Fine-Grained Speculative Decoding',u:'https://www.cs.cmu.edu/~zhihaoj2/papers/AdaServe_EuroSys26.pdf',v:'EuroSys 2026',o:'CMU · Princeton · EPFL · AWS',d:'按每请求 TPOT 目标动态调整 token-tree 深度/宽度分配验证预算，是概率性的资源倾斜而非确定性硬件保证',g:G.prov,k:['llm'],gr:'token tree'},
+ {t:'Prophet: Precise QoS Prediction on Non-Preemptive Accelerators',u:'https://dl.acm.org/doi/10.1145/3037697.3037700',v:'ASPLOS 2017',o:'—',d:'针对不可抢占加速器，用细粒度性能计数器建立干扰模型精确预测 co-location 下的 QoS/slowdown。后续 GSLICE/gpulet 干扰模型的先驱',g:G.none,k:['model'],gr:'预测模型'},
+ {t:'Understanding GPU Resource Interference One Level Deeper',u:'https://anakli.inf.ethz.ch/papers/gpu_interference_socc25.pdf',v:'SoCC 2025',o:'ETH Zurich',d:'对 MPS/MIG 等现有隔离机制做更深层的资源竞争测量分析，揭示 L2/带宽等未被覆盖的干扰源。做 Gap A 的必读起点',g:G.none,k:['model','mech'],gr:'测量分析'},
+ {t:'Adrenaline: Attention Disaggregation for LLM Serving',u:'https://arxiv.org/abs/2503.20552',v:'arXiv 2025',o:'—',d:'把 decode 阶段的 attention（memory-bound）卸载到独立 prefill 实例执行。注意是跨实例算子解耦，不是同卡内 SM 分区',g:G.best,k:['llm'],gr:'算子（跨实例）'},
+ {t:'PIM Is All You Need: A CXL-Enabled GPU-Free System for LLM Inference',u:'https://arxiv.org/pdf/2502.07578',v:'ASPLOS 2025',o:'—',d:'完全用 CXL-PIM 做推理，把算力做进内存内部，从根本上取消「GPU 算力 vs 显存」的边界',g:G.none,k:['mech'],gr:'体系结构'},
+ {t:'Missile: Fine-Grained, Hardware-Level GPU Resource Isolation',u:'https://arxiv.org/abs/2407.13996',v:'arXiv（未见接收）',o:'—',d:'Elastic SM multiplexing + VRAM channel coloring（逆向 channel hash）+ CFS 式 PCIe 带宽调度。多层次隔离但仍是 best-effort',g:G.best,k:['share','mech'],gr:'SM / channel / PCIe'},
+];
+const tbody=document.querySelector('#ptable tbody');
+const filters=document.getElementById('filters');
+let active=new Set();
+function chipFor(id){const t=TOPICS.find(x=>x.id===id);return t?`<span class="chip"><i class="dot ${t.cls}"></i>${t.name}</span>`:'';}
+function render(){
+  const rows=P.filter(p=>active.size===0||p.k.some(k=>active.has(k)));
+  tbody.innerHTML=rows.map(p=>`<tr>
+    <td><a href="${p.u}" target="_blank" rel="noopener">${p.t}</a></td>
+    <td>${p.v}</td><td style="color:var(--ink-2)">${p.o}</td>
+    <td style="color:var(--ink-2)">${p.d}</td>
+    <td>${p.g}</td>
+    <td><div style="font-size:12px;color:var(--ink-2);margin-bottom:4px">${p.gr}</div>${p.k.map(chipFor).join(' ')}</td></tr>`).join('');
+  document.getElementById('tcount').textContent=`显示 ${rows.length} / ${P.length} 篇`;
+}
+filters.innerHTML=`<button data-id="__all" aria-pressed="true">全部</button>`+
+  TOPICS.map(t=>`<button data-id="${t.id}" aria-pressed="false"><i class="dot ${t.cls}"></i>${t.name}</button>`).join('');
+filters.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  const id=b.dataset.id;
+  if(id==='__all'){active.clear();}else{active.has(id)?active.delete(id):active.add(id);}
+  [...filters.querySelectorAll('button')].forEach(x=>{
+    x.setAttribute('aria-pressed', x.dataset.id==='__all'?(active.size===0):active.has(x.dataset.id));});
+  render();
+});
+render();
+const btn=document.getElementById('themeBtn');
+btn.addEventListener('click',()=>{
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  btn.textContent=dark?'切换深色':'切换浅色';
+});
+if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.setAttribute('data-theme','dark');btn.textContent='切换浅色';}
+</script>
+</body>
+</html>
