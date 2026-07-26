@@ -31,6 +31,19 @@ window.CONTENT_ITEMS = [
     accent: 'orange'
   },
   {
+    id: 'leo-satellite-networking-survey',
+    category: 'research',
+    type: '调研报告',
+    title: '卫星网络研究调研报告',
+    subtitle: '2026.07 · LEO Satellite Networking',
+    description: '覆盖 2025–2026 年低轨卫星网络的部署现状、顶会优秀论文、网络仿真/仿真器开源生态，以及分域（分区/分层）路由技术路线的系统梳理与选题建议。',
+    tags: ['卫星网络', 'LEO', '分域路由'],
+    href: 'content/research/leo-satellite-networking-survey.html',
+    action: '打开阅读',
+    updated: '2026-07-26',
+    accent: 'green'
+  },
+  {
     id: 'open-source-llm-inference-shortlist',
     category: 'resources',
     type: '开源资源',

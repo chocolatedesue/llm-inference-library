@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 调研报告 | 分布式 LLM 推理并行化 | `/content/research/distributed-llm-inference-survey.html` |
 | 调研报告 | 细粒度 GPU 算力调度 | `/content/research/fine-grained-gpu-scheduling-survey.html` |
+| 调研报告 | 卫星网络研究调研报告 | `/content/research/leo-satellite-networking-survey.html` |
 | 开源资源 | 开源代码清单 | `/content/resources/open-source-llm-inference-shortlist.html` |
 | 演示文稿 | LLM 推理仿真实验平台 | `/downloads/llm-inference-simulation-platform-slides.pptx` |
 | 论文解构 | 12 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |

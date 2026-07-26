@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卫星网络研究调研报告 · 2026.07</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+  --tx:#e6edf3; --tx2:#a9b4c2; --tx3:#7d8899;
+  --a1:#4c8dff; --a2:#3ecf8e; --a3:#f5a623; --a4:#c778dd; --a5:#ff6b6b;
+}
+@media (prefers-color-scheme: light){
+  :root{ --bg:#f7f8fa; --panel:#ffffff; --panel2:#f0f3f8; --line:#e0e5ee;
+         --tx:#12161c; --tx2:#4a5566; --tx3:#78849a;
+         --a1:#1f6feb; --a2:#1a7f5a; --a3:#b4700a; --a4:#8250df; --a5:#c62d42; }
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  line-height:1.75; font-size:15.5px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+header{padding:64px 0 40px;border-bottom:1px solid var(--line);margin-bottom:40px}
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--a1);font-weight:600;margin-bottom:14px}
+h1{font-size:38px;line-height:1.25;margin:0 0 16px;letter-spacing:-.02em;font-weight:700}
+.sub{color:var(--tx2);font-size:16px;max-width:760px;margin:0}
+.meta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.pill{font-size:12px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;color:var(--tx2);background:var(--panel)}
+
+h2{font-size:25px;margin:56px 0 6px;letter-spacing:-.01em;font-weight:700;scroll-margin-top:20px}
+h2 .num{color:var(--a1);font-variant-numeric:tabular-nums;margin-right:10px;font-weight:600}
+h3{font-size:17.5px;margin:34px 0 10px;font-weight:650;color:var(--tx)}
+h4{font-size:15px;margin:20px 0 6px;font-weight:650;color:var(--tx2)}
+p{margin:10px 0}
+a{color:var(--a1);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:var(--a1)}
+ul,ol{padding-left:22px;margin:10px 0}
+li{margin:5px 0}
+code{background:var(--panel2);padding:1.5px 6px;border-radius:4px;font-size:13px;
+     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--a4)}
+.lede{color:var(--tx2);font-size:15px;margin-bottom:8px}
+
+.toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:32px 0}
+.toc-t{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);font-weight:600;margin-bottom:12px}
+.toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px}
+.toc li{margin:4px 0;break-inside:avoid}
+
+.grid{display:grid;gap:14px;margin:18px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}.toc ol{columns:1}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.card h4{margin-top:0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.stat .v{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .k{font-size:12.5px;color:var(--tx3);margin-top:6px}
+.stat .n{font-size:12px;color:var(--tx2);margin-top:8px;line-height:1.5}
+.c1 .v{color:var(--a1)} .c2 .v{color:var(--a2)} .c3 .v{color:var(--a3)} .c4 .v{color:var(--a4)}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.8px;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{background:var(--panel2);text-align:left;padding:11px 13px;font-weight:650;font-size:12.5px;
+   color:var(--tx2);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--tx2)}
+tr:last-child td{border-bottom:none}
+td strong{color:var(--tx);font-weight:600}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:600;white-space:nowrap}
+.t-hot{background:rgba(255,107,107,.14);color:var(--a5)}
+.t-ok{background:rgba(62,207,142,.14);color:var(--a2)}
+.t-mid{background:rgba(245,166,35,.15);color:var(--a3)}
+.t-new{background:rgba(76,141,255,.14);color:var(--a1)}
+.t-x{background:rgba(199,120,221,.15);color:var(--a4)}
+
+.note{border-left:3px solid var(--a1);background:var(--panel);border-radius:0 10px 10px 0;
+      padding:14px 18px;margin:18px 0;font-size:14.5px;color:var(--tx2)}
+.note strong{color:var(--tx)}
+.warn{border-left-color:var(--a3)}
+.key{border-left-color:var(--a2)}
+
+.paper{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:16px 18px;margin:12px 0}
+.paper .pt{font-weight:650;color:var(--tx);font-size:15px;margin-bottom:4px}
+.paper .pv{font-size:12px;color:var(--tx3);margin-bottom:8px}
+.paper .pd{font-size:14px;color:var(--tx2);margin:0}
+
+.tl{position:relative;padding-left:26px;margin:20px 0}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-i{position:relative;margin-bottom:18px}
+.tl-i::before{content:"";position:absolute;left:-24px;top:7px;width:10px;height:10px;border-radius:50%;
+  background:var(--a1);box-shadow:0 0 0 3px var(--bg)}
+.tl-i.past::before{background:var(--tx3)}
+.tl-d{font-size:12px;color:var(--a1);font-weight:650;font-variant-numeric:tabular-nums}
+.tl-i.past .tl-d{color:var(--tx3)}
+.tl-t{font-weight:600;font-size:14.5px}
+.tl-x{font-size:13px;color:var(--tx2)}
+
+.refs{font-size:13px;color:var(--tx2)}
+.refs li{margin:7px 0}
+footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);color:var(--tx3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Research Brief · LEO Satellite Networking</div>
+  <h1>卫星网络研究调研报告</h1>
+  <p class="sub">覆盖 2025–2026 年低轨卫星网络的部署现状、顶会优秀论文、网络仿真/仿真器开源生态，以及<strong>分域（分区/分层）路由</strong>技术路线的系统梳理与选题建议。</p>
+  <div class="meta">
+    <span class="pill">编制日期：2026-07-26</span>
+    <span class="pill">时间窗：2024 H2 – 2026 H2</span>
+    <span class="pill">重点：仿真平台 · 开源代码 · 分域路由</span>
+  </div>
+</header>
+
+<div class="toc">
+  <div class="toc-t">目录</div>
+  <ol>
+    <li><a href="#s1">卫星网络近况：部署与技术态势</a></li>
+    <li><a href="#s2">顶会与近期优秀论文</a></li>
+    <li><a href="#s3">网络仿真平台与开源代码</a></li>
+    <li><a href="#s4">分域路由专题</a></li>
+    <li><a href="#s5">会议与投稿时间线</a></li>
+    <li><a href="#s6">研究空白与选题建议</a></li>
+    <li><a href="#s7">参考文献与链接</a></li>
+  </ol>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1"><span class="num">01</span>卫星网络近况：部署与技术态势</h2>
+<p class="lede">2025–2026 年最大的变化是：<strong>巨型星座从"论文里的理想拓扑"变成了"可被测量的真实系统"</strong>，而真实系统与学术界长期假设的规则星座差距显著。</p>
+
+<div class="grid g4">
+  <div class="stat c1"><div class="v">~9,100</div><div class="k">Starlink 在轨活跃卫星（2025 年底）</div><div class="n">累计发射 &gt;10,500 颗，已离轨 &gt;1,300 颗</div></div>
+  <div class="stat c2"><div class="v">9 个</div><div class="k">实测识别出的运行壳层</div><div class="n">5 个倾角带：53.0°/53.2°/43.0°/70.0°/97.6°，高度 354–570 km</div></div>
+  <div class="stat c3"><div class="v">79.4%</div><div class="k">日常卫星机动中由碰撞规避驱动的比例</div><div class="n">日均约 264 次机动，拓扑并非"可完美预测"</div></div>
+  <div class="stat c4"><div class="v">324 颗</div><div class="k">千帆星座 2026 年在轨目标</div><div class="n">2026 年初 108 颗，计划全年 12 次"一箭18星"</div></div>
+</div>
+
+<h3>1.1 真实星座 ≠ 理想星座（对仿真研究最关键的一条）</h3>
+<p>亚利桑那大学 2026 年 3 月的工作 <em>Starlink Constellation: Deployment, Configuration, and Dynamics</em>（arXiv:2603.25835）用 2019–2025 的 TLE + CelesTrak 交会报告做了迄今最系统的星座解剖，结论直接冲击了大量已有 LEO 网络研究的前提：</p>
+<ul>
+  <li>部署重心持续<strong>下移到 500 km 以下</strong>，v2 Mini 已占约 5,800 颗，成为主力代际；</li>
+  <li>Shell 1 每轨道面 18 星、约 20° 相位间隔，但存在大量 <strong>twin/triad 备份簇</strong>（间距 0.9–5.2°），即"非规则卫星"；</li>
+  <li>卫星运行寿命 4–6 年，日故障概率 0.0128%，运行阶段中位数 864 天；</li>
+  <li><strong>核心论断：实际部署显著偏离理想的完全对称 Walker 星座</strong>——而 Hypatia 等主流仿真器默认生成的正是理想 Walker 配置。</li>
+</ul>
+<div class="note warn"><strong>研究含义：</strong>如果你的路由/TE 论文只在理想 Walker +Grid ISL 上评估，审稿人（尤其 SIGCOMM/NSDI 系）越来越可能质疑其外部效度。用真实 TLE 驱动、并加入故障与机动扰动，正在从"加分项"变成"及格线"。</div>
+
+<h3>1.2 激光星间链路（ISL）与拓扑设计</h3>
+<p>ISL 已从概念走向规模化运营：SpaceX、Telesat Lightspeed、Kuiper 均在推进光学交叉链路，目标是减少落地站依赖、构建在轨网状网。学术侧的关注点已从"能不能建"转向：</p>
+<ul>
+  <li><strong>拓扑设计空间</strong>：+Grid 之外的非规则/跨壳层 ISL 匹配问题（见 APNet/LEO-NET 系列的 topology design 研究）；</li>
+  <li><strong>时变图（TVG）建模</strong>：拓扑随时间演化的最优化，例如 <em>Time-Dependent Network Topology Optimization for LEO Satellite Constellations</em>（arXiv:2501.13280）；</li>
+  <li><strong>ISL 切换对传输层的影响</strong>：ISL 路径变化引发的 RTT 抖动直接影响 TCP，这也是 SIGCOMM'25 LeoCC 的出发点。</li>
+</ul>
+
+<h3>1.3 直连手机（D2C / NTN）成为独立热点</h3>
+<p>2025–2026 年，Direct-to-Cell 从产业新闻变成了有实测数据支撑的研究方向。代表性工作包括 SIGCOMM'25 的 <em>Direct-to-Cell Satellite Network without Satellite Navigation</em>（清华），以及基于众包测量的 <em>Direct-to-Cell: A First Look into Starlink's D2D RAN</em>（arXiv:2506.00283）与 <em>A Variegated Look at Direct-to-Cell Satellites in the Wild</em>（ACM 2025）。3GPP NTN 与 D2C 两条技术路线的对比分析亦已有专门综述（arXiv:2605.05843）。</p>
+
+<h3>1.4 中国星座：从"能发"到"成网"</h3>
+<ul>
+  <li><strong>千帆（G60）星座</strong>：2026 年初约 108 颗在轨，年度目标 324 颗，长期规划约 1.4–1.5 万颗；运力瓶颈正由商业火箭补齐。</li>
+  <li><strong>GW（国网）星座</strong>：2026 年持续发射低轨组批（如低轨 02 组、20 组），与千帆形成双轨并进。</li>
+  <li>国内学术侧的组织形态也已成型：CNKI/《天地一体化信息网络》《航天电子技术》等有成体系的路由与移动性管理综述，2025 年《未来网络发展大会》发布了《卫星互联网承载网技术白皮书》。</li>
+</ul>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="num">02</span>顶会与近期优秀论文</h2>
+<p class="lede">卫星网络已经在 SIGCOMM 主会稳定占有 5–7 篇的席位，不再需要"蹭" workshop。以下按会议年份倒序整理。</p>
+
+<h3>2.1 ACM SIGCOMM 2026（2026-08-17~21,丹佛，已放榜）</h3>
+<div class="paper">
+  <div class="pt">Dissecting the StarLink: Characterizing Queuing and Flow Dynamics in the Starlink Network</div>
+  <div class="pv">Hendrik Cech (TUM), Nitinder Mohan (TU Delft), Jörg Ott (TUM) · SIGCOMM 2026</div>
+  <p class="pd">深入刻画 Starlink 的排队与流动力学。TUM/TU Delft 这条线（WetLinks 数据集的同一批人）是目前 LEO 测量最扎实的团队之一，其数据常被用作仿真器保真度的"真值"。</p>
+</div>
+<div class="paper">
+  <div class="pt">Planet-Scale IoT Connectivity via LEO Satellites</div>
+  <div class="pv">Ziyue Zhang 等（HK PolyU）、Linghe Kong（SJTU）、Mo Li（HKUST） · SIGCOMM 2026</div>
+  <p class="pd">星地 IoT 直连的行星级连通性设计，代表了"低速率、超广覆盖"这一与宽带互联网正交的赛道。</p>
+</div>
+<div class="paper">
+  <div class="pt">CommSAR: Enabling Bidirectional Communication in SAR Imaging Satellites via Shared Waveform</div>
+  <div class="pv">SJTU + 中科院空天信息创新研究院 · SIGCOMM 2026</div>
+  <p class="pd">用 SAR 成像波形复用实现通信，通感一体（ISAC）在轨落地的代表作。</p>
+</div>
+
+<h3>2.2 ACM SIGCOMM 2025</h3>
+<div class="tw"><table>
+<tr><th>论文</th><th>单位</th><th>看点</th></tr>
+<tr><td><strong>LeoCC: Making Internet Congestion Control Robust to LEO Satellite Dynamics</strong></td><td>清华 / 中关村实验室</td><td>针对切换与 ISL 变化导致的 RTT/带宽突变重设计拥塞控制，是传输层方向最值得读的一篇</td></tr>
+<tr><td><strong>SaTE: Low-Latency Traffic Engineering for Satellite Networks</strong></td><td>NUS / 多伦多大学</td><td>卫星网 TE，与"分域路由"直接相关：如何在拓扑高频变化下做低时延流量工程</td></tr>
+<tr><td><strong>Small-scale LEO Satellite Networking for Global-scale Demands</strong></td><td>清华（Yuanjie Li 等）</td><td>反直觉命题：小规模星座如何服务全球需求，对"必须万颗才有用"的常识提出挑战</td></tr>
+<tr><td><strong>Direct-to-Cell Satellite Network without Satellite Navigation</strong></td><td>清华</td><td>无需卫星导航的 D2C 组网</td></tr>
+<tr><td><strong>StarCDN: Moving Content Delivery Networks to Space</strong></td><td>UIUC + Akamai + UMass</td><td>把 CDN 搬到天上，在轨缓存/内容分发的系统级设计</td></tr>
+<tr><td><strong>DeepSpace: Super Resolution Powered Satellite Image Data Acquisition</strong></td><td>爱丁堡大学 / UIUC</td><td>遥感数据下行链路的带宽瓶颈用超分辨解决</td></tr>
+</table></div>
+
+<h3>2.3 其他值得追踪的场次</h3>
+<div class="grid g2">
+  <div class="card">
+    <h4>MobiCom</h4>
+    <p style="font-size:14px;color:var(--tx2);margin:0">MobiCom'24 的 <strong>Stable Hierarchical Routing for Operational LEO Networks</strong> 是分域路由方向必读的一篇（详见 §4）。MobiCom 2026 将于 10 月 26–30 日在 Austin 举行。</p>
+  </div>
+  <div class="card">
+    <h4>NDSS / SpaceSec</h4>
+    <p style="font-size:14px;color:var(--tx2);margin:0"><strong>Resilient Routing for LEO Mega-Constellation Networks</strong>（Virginia Tech, 2024）提出基于 ISL 结构的网络坐标系与轻量路由，在高强度对抗干扰下投递率提升 12%，并给出了抗毁路由的标准化测试框架。</p>
+  </div>
+  <div class="card">
+    <h4>LEO-NET @ SIGCOMM</h4>
+    <p style="font-size:14px;color:var(--tx2);margin:0">第 4 届 LEO Networking and Communication 研讨会，2026-08-17 丹佛。投稿门槛低于主会但社区集中度极高，是新人切入的最佳入口（2026 轮 5/11 截稿，已过）。</p>
+  </div>
+  <div class="card">
+    <h4>APNet（亚太网络研讨会）</h4>
+    <p style="font-size:14px;color:var(--tx2);margin:0">OpenSN（APNet'24）、<strong>Topology-Adaptive LEO Satellite Network Telemetry via Graph Isomorphism and Topology Partitioning</strong>（APNet'25）都出自这里，国内团队友好，周期短。</p>
+  </div>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="num">03</span>网络仿真平台与开源代码</h2>
+<p class="lede">这一节是本报告的重点。先给结论：<strong>没有任何一个现有仿真/仿真器能同时满足"大规模 + 真实协议栈 + 高保真"</strong>，选型必须按研究目标取舍。</p>
+
+<h3>3.1 主流工具横向对比</h3>
+<div class="tw"><table>
+<tr><th>工具</th><th>类型</th><th>技术栈</th><th>规模上限</th><th>状态</th><th>仓库 / 主页</th></tr>
+<tr>
+  <td><strong>Hypatia</strong></td><td>包级仿真</td><td>ns-3 + Python(satgenpy) + Cesium 可视化</td><td>万级（离线，慢）</td><td><span class="tag t-ok">事实标准</span></td>
+  <td><a href="https://github.com/snkas/hypatia">snkas/hypatia</a></td>
+</tr>
+<tr>
+  <td><strong>StarryNet</strong></td><td>容器仿真器</td><td>Docker + Linux bridge</td><td>约 1,023 星（bridge 上限）</td><td><span class="tag t-ok">最常用</span></td>
+  <td><a href="https://github.com/SpaceNetLab/StarryNet">SpaceNetLab/StarryNet</a></td>
+</tr>
+<tr>
+  <td><strong>OpenSN</strong></td><td>容器仿真器</td><td>Docker API + etcd 解耦架构</td><td>千级以上</td><td><span class="tag t-new">APNet'24</span></td>
+  <td><a href="https://opensn-library.github.io/">opensn-library.github.io</a></td>
+</tr>
+<tr>
+  <td><strong>Celestial</strong></td><td>microVM 仿真器</td><td>Firecracker microVM + 星型网络模型</td><td>大规模（资源占用最低）</td><td><span class="tag t-ok">LEO Edge</span></td>
+  <td><a href="https://openfogstack.github.io/celestial/">openfogstack/celestial</a></td>
+</tr>
+<tr>
+  <td><strong>xeoverse</strong></td><td>实时仿真</td><td>Mininet + 轻量 Linux VM + 预计算</td><td>1,584 星（Starlink Shell 1）实时</td><td><span class="tag t-hot">性能最优</span></td>
+  <td>arXiv:2406.11366（未见公开仓库）</td>
+</tr>
+<tr>
+  <td><strong>NetSatBench</strong></td><td>分布式仿真器</td><td>Docker + etcd + VXLAN + tc，跨机集群</td><td>588 星 / 10 节点集群实测</td><td><span class="tag t-hot">2026-04 最新</span></td>
+  <td>arXiv:2604.27854（宣称已开源）</td>
+</tr>
+<tr>
+  <td><strong>StarPerf</strong></td><td>性能分析</td><td>Python 星座性能建模</td><td>大规模离线</td><td><span class="tag t-ok">常用基线</span></td>
+  <td>SpaceNetLab</td>
+</tr>
+<tr>
+  <td><strong>FLoRaSat</strong></td><td>OMNeT++ 仿真</td><td>面向 LoRa/直连 IoT 卫星</td><td>中等</td><td><span class="tag t-mid">IoT 专用</span></td>
+  <td><a href="https://gitlab.inria.fr/jfraire/florasat">INRIA GitLab</a></td>
+</tr>
+<tr>
+  <td><strong>CosmicBeats</strong></td><td>多层仿真</td><td>Python，通信+计算+成像联合建模</td><td>中等</td><td><span class="tag t-new">Microsoft</span></td>
+  <td><a href="https://github.com/microsoft/CosmicBeats-Simulator">microsoft/CosmicBeats-Simulator</a></td>
+</tr>
+<tr>
+  <td><strong>OpenSAND</strong></td><td>链路级仿真</td><td>CNES 出品，DVB-S2/RCS2</td><td>GEO 为主</td><td><span class="tag t-mid">工业级</span></td>
+  <td><a href="https://github.com/cnes/opensand">cnes/opensand</a></td>
+</tr>
+<tr>
+  <td><strong>icarus-ndnsim</strong></td><td>ndnSIM 模块</td><td>NDN 命名数据网 + 大规模 LEO</td><td>中等</td><td><span class="tag t-x">ICN 方向</span></td>
+  <td><a href="https://github.com/ICARUS-ICN/icarus-ndnsim">ICARUS-ICN/icarus-ndnsim</a></td>
+</tr>
+<tr>
+  <td><strong>Plotinus</strong></td><td>数字孪生</td><td>卫星互联网数字孪生系统</td><td>—</td><td><span class="tag t-mid">arXiv:2403.08515</span></td>
+  <td>论文</td>
+</tr>
+</table></div>
+
+<h3>3.2 关键发现：仿真器的保真度危机</h3>
+<p>2026 年 4 月的 <em>An experimental evaluation of satellite constellation emulators</em>（arXiv:2604.04498）系统评测了 StarryNet / OpenSN / Celestial 三家，结论相当尖锐，这是目前<strong>最容易撑起一篇好论文的空白</strong>：</p>
+<div class="note warn">
+<strong>核心结论：</strong>"没有任何现有卫星星座仿真器能匹配真实测量"——因为客户端调度、大气条件等关键因素完全未被建模（对照基准为 WetLinks 真实数据集）。<br><br>
+<strong>具体问题：</strong>① 星座状态更新延迟随网络规模<strong>无界增长</strong>，常常直接打断仿真；② StarryNet 主线因 CLI 方式调用 Docker，启动时间比开发分支慢 10 倍；③ OpenSN 运行时计算星座状态，延迟从 5 秒膨胀到 55 秒。<br><br>
+<strong>作者给出的理想架构：</strong>无守护进程的容器运行时 + <strong>eBPF 网络仿真</strong> + 星座状态并行预计算 + 异构卫星配置支持 + 可视化与地理边界框裁剪。
+</div>
+
+<h3>3.3 性能参考数据</h3>
+<div class="grid g3">
+  <div class="stat c1"><div class="v">2.3–2.9×</div><div class="k">xeoverse 相对 Hypatia 的加速比</div><div class="n">仿真与预计算时间</div></div>
+  <div class="stat c2"><div class="v">40×</div><div class="k">xeoverse 相对 StarryNet 的加速比</div><div class="n">StarryNet 超过约 1,023 星即因 Linux bridge 限制失效</div></div>
+  <div class="stat c3"><div class="v">2% / 16%</div><div class="k">xeoverse 吞吐误差（晴天 / 雨天）</div><div class="n">对照真实 Starlink 测量</div></div>
+</div>
+
+<h3>3.4 选型建议</h3>
+<ul>
+  <li><strong>做路由算法 / 时延分析、要可复现基线</strong> → Hypatia（审稿人认可度最高，几乎是必须跑的 baseline）；</li>
+  <li><strong>要跑真实协议栈（BGP/SRv6/TCP 实现、真实内核）</strong> → StarryNet（开发分支）或 OpenSN；规模再大用 NetSatBench 的分布式方案；</li>
+  <li><strong>要实时交互 / 大规模 + 应用层实验</strong> → xeoverse 思路（Mininet + 预计算增量更新）；</li>
+  <li><strong>做在轨计算 / LEO Edge</strong> → Celestial（Firecracker microVM，资源最省）；</li>
+  <li><strong>资源汇总入口</strong>：<a href="https://github.com/jwwthu/Satellite-Open-Source">jwwthu/Satellite-Open-Source</a>（工具+数据集大全）与 <a href="https://github.com/liuwei-network/awesome-satellite-network">liuwei-network/awesome-satellite-network</a>（按 13 个主题分类的论文清单，含路由/测量/安全/平台）。</li>
+</ul>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="num">04</span>分域路由专题</h2>
+<p class="lede">"分域路由"在文献中有多个名字：hierarchical routing、partition-based routing、segment/zone routing、area-based routing。其共同动机只有一个：<strong>万颗星规模下，全局最短路计算与链路状态泛洪都不可行</strong>。</p>
+
+<h3>4.1 为什么必须分域</h3>
+<ul>
+  <li><strong>计算复杂度</strong>：N=10,000 的 Dijkstra 在星上算力下每个拓扑快照都是负担，而拓扑变化以秒级发生；</li>
+  <li><strong>控制开销</strong>：全网链路状态泛洪的收敛时间可能超过拓扑保持稳定的时间窗（"路由还没收敛，拓扑又变了"）；</li>
+  <li><strong>稳定性</strong>：全局重算导致路径频繁抖动，直接破坏上层 TCP/QUIC；</li>
+  <li><strong>故障域隔离</strong>：单点失效不应触发全网重算。</li>
+</ul>
+
+<h3>4.2 五条主要技术路线</h3>
+<div class="tw"><table>
+<tr><th>路线</th><th>代表工作</th><th>分域依据</th><th>核心机制</th><th>关键结果</th></tr>
+<tr>
+  <td><strong>轨道条带 + IS-IS 层次</strong></td>
+  <td>A Routing Architecture for Satellite Networks（Tony Li, IETF draft-li-arch-sat / RFC 9717）</td>
+  <td>相邻若干轨道面组成 <em>stripe</em></td>
+  <td>stripe = IS-IS L1 区域，stripe 间轨间链路构成 L2；Area Proxy 使每个 stripe 对 L2 只暴露一条 LSP；转发面用 SR-MPLS（node SID + area SID）；结合轨道可预测性预计算拓扑变更</td>
+  <td>1,000 stripe × 1,000 星 = <strong>100 万卫星可扩展</strong>，且<strong>不需要任何新协议</strong></td>
+</tr>
+<tr>
+  <td><strong>地标骨架图 + 段路由</strong></td>
+  <td>Landmark-Based Skeleton Graphs（arXiv:2411.19679）</td>
+  <td>按分区大小 R 划分区域，每区设虚拟地标</td>
+  <td>把全网抽象成"骨架图"，包沿地标间的轻量骨架路径转发，区内用多路径概率转发分散流量</td>
+  <td>算法复杂度与隧道路径数均降低 <strong>R²</strong>，骨架路径缩短 √R，更新开销降低 R²</td>
+</tr>
+<tr>
+  <td><strong>聚类分段 + 边界星</strong></td>
+  <td>Secure and Scalable Rerouting in LEO（arXiv:2509.10173, ETH Zürich / Oxford）</td>
+  <td>k-medoids 聚类划分虚拟 segment</td>
+  <td>边界卫星作为路由枢纽，负责段间通信与故障信息传播；对比 source / neighbor / segment / global 四种感知范围</td>
+  <td>高故障率下比邻居级方案<strong>少 30% 丢包</strong>、<strong>少 80% 环路</strong>；全局感知虽好但开销不可用</td>
+</tr>
+<tr>
+  <td><strong>地理分区</strong></td>
+  <td>Hierarchical Load-Balanced Routing via Geographic Partitioning（Appl. Sci. 2025）；Geographic-based failure-tolerant routing（Adv. Space Res. 2025）</td>
+  <td>按地表经纬度网格划分</td>
+  <td>卫星位置映射到地理网格，路由决策基于"当前覆盖哪个格子"而非卫星 ID，天然规避拓扑变化</td>
+  <td>负载均衡与容错，无需维护随卫星移动而变的状态</td>
+</tr>
+<tr>
+  <td><strong>稳定分层（运营视角）</strong></td>
+  <td>Stable Hierarchical Routing for Operational LEO Networks（MobiCom'24）</td>
+  <td>面向真实运营约束的层次划分</td>
+  <td>强调路由<strong>稳定性</strong>而非最优性——在可运营的层次结构下抑制路径抖动</td>
+  <td>分域路由从"算得快"转向"算得稳"的代表性转折</td>
+</tr>
+</table></div>
+
+<h3>4.3 与之相关的工程实践</h3>
+<ul>
+  <li><strong>SRv6 在 LEO 的落地实验</strong>：NetSatBench（arXiv:2604.27854）用 OneWeb 类星座（588 星 + 5 网关 + 7 用户）做了 SRv6 案例研究，发现<strong>端到端协同切换策略远优于本地策略</strong>——网关侧与用户侧协同选星可把 RTT 从数百毫秒降到约 35 ms，关键在于最小化 ISL 跳数；同时 BBR 在 LEO 典型丢包下明显优于 Cubic。这是目前把"分段路由 + 分域切换"在真实协议栈上跑通的最完整公开实验。</li>
+  <li><strong>拓扑分区做遥测</strong>：APNet'25 的 <em>Topology-Adaptive LEO Satellite Network Telemetry via Graph Isomorphism and Topology Partitioning</em> 把分区思想用在了 INT 遥测上，说明"分域"这一原语的适用面正在从路由外溢到测量与运维。</li>
+  <li><strong>开源可参考的路由代码</strong>：<a href="https://github.com/Fede-Berga/satellite_routing">Fede-Berga/satellite_routing</a>、<a href="https://github.com/sat-robustness-simu/nssatroute">sat-robustness-simu/nssatroute</a>、<a href="https://github.com/mathias-magnusson/Zone-routing-protocol">Zone-routing-protocol</a>（ZRP 经典实现，可作分域路由的起点）。</li>
+</ul>
+
+<div class="note key"><strong>一句话总结分域路由的当前共识：</strong>分域的<em>划分依据</em>正在从"卫星 ID / 轨道结构"转向"地理位置 + 运营稳定性"，而<em>转发面</em>正在收敛到<strong>段路由（SR-MPLS / SRv6）</strong>——因为它天然能表达"先到某个域、再到域内某点"的两级语义，且不需要中间节点维护每流状态。</div>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="num">05</span>会议与投稿时间线</h2>
+<div class="tl">
+  <div class="tl-i past">
+    <div class="tl-d">2026-05-11（已截止）</div>
+    <div class="tl-t">LEO-NET 2026 投稿</div>
+    <div class="tl-x">第 4 届 LEO 网络与通信研讨会，通知 6/6，camera-ready 6/20</div>
+  </div>
+  <div class="tl-i">
+    <div class="tl-d">2026-08-17 ~ 08-21</div>
+    <div class="tl-t">ACM SIGCOMM 2026 · 丹佛 Colorado Convention Center</div>
+    <div class="tl-x">第 40 届。LEO-NET 于 8/17 同址举办；另有 HotOptics 等相关 workshop。论文列表已公布。</div>
+  </div>
+  <div class="tl-i">
+    <div class="tl-d">2026-10-26 ~ 10-30</div>
+    <div class="tl-t">ACM MobiCom 2026 · 美国 Austin</div>
+    <div class="tl-x">两轮投稿制：夏季轮 2025-09-03、冬季轮 2026-03-13（均已过），下一届关注 2026 秋季轮</div>
+  </div>
+  <div class="tl-i">
+    <div class="tl-d">2026 年内</div>
+    <div class="tl-t">IEEE INFOCOM 2026 / USENIX NSDI '26</div>
+    <div class="tl-x">INFOCOM 体量大、对卫星网络算法类工作友好；NSDI 偏系统实现与实测</div>
+  </div>
+  <div class="tl-i">
+    <div class="tl-d">滚动</div>
+    <div class="tl-t">NDSS SpaceSec / APNet / HotNets</div>
+    <div class="tl-x">SpaceSec 收抗毁与安全路由；APNet 周期短、亚太团队友好；HotNets 收观点型短文（如 HotNets'25 的 "Starlink Doesn't End the Digital Divide"）</div>
+  </div>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="num">06</span>研究空白与选题建议</h2>
+<div class="grid g2">
+  <div class="card">
+    <h4>① 高保真仿真器本身就是好选题 <span class="tag t-hot">推荐</span></h4>
+    <p style="font-size:14px;color:var(--tx2)">arXiv:2604.04498 已经把"现有仿真器全部对不上真实测量"这句话说出口，并列出了理想架构（daemon-less 容器 + <strong>eBPF 数据面</strong> + 并行预计算 + 异构卫星）。把这套架构真正实现出来，并用 WetLinks / 真实 TLE 校准，是一篇结构清晰、贡献明确的系统论文。</p>
+  </div>
+  <div class="card">
+    <h4>② 非规则星座上的分域路由 <span class="tag t-hot">推荐</span></h4>
+    <p style="font-size:14px;color:var(--tx2)">现有分域方案（stripe、地标、地理网格）几乎都隐含"规则 Walker"假设。而 arXiv:2603.25835 证明真实 Starlink 有 twin/triad 备份簇、多壳层、日均 264 次机动。<strong>在非规则 + 高机动星座上，域该怎么划、域边界怎么随机动迁移</strong>——这是一个尚无人系统回答的问题。</p>
+  </div>
+  <div class="card">
+    <h4>③ 分域粒度的自适应控制</h4>
+    <p style="font-size:14px;color:var(--tx2)">地标方案的收益是 R² 量级，但 R 在所有文献里都是<em>静态超参</em>。R 应随流量分布、故障率、星上算力动态调整——把它建模成在线控制问题（甚至 RL），是一个开销小、故事完整的切入点。</p>
+  </div>
+  <div class="card">
+    <h4>④ 分域路由 × 传输层的联合设计</h4>
+    <p style="font-size:14px;color:var(--tx2)">LeoCC（SIGCOMM'25）证明了 ISL 切换对 CC 的破坏，NetSatBench 证明了协同切换能把 RTT 从数百 ms 降到 35 ms。但<strong>域边界切换事件是否应该显式通知传输层</strong>（类似显式路径变更通知）？这是一个跨层的空白。</p>
+  </div>
+  <div class="card">
+    <h4>⑤ 分域路由的安全与对抗</h4>
+    <p style="font-size:14px;color:var(--tx2)">ETH 的工作已经证明分段路由在故障下优于邻居级方案，但只考虑了随机/定向故障。<strong>如果攻击者专门打击边界卫星（域枢纽）</strong>，分域架构的脆弱性可能高于扁平架构——这是 SpaceSec/NDSS 方向的明确空位。</p>
+  </div>
+  <div class="card">
+    <h4>⑥ 星地一体的域间路由</h4>
+    <p style="font-size:14px;color:var(--tx2)">当前工作基本止步于星座内部。<strong>天基域与地面 AS 之间的域间路由</strong>（BGP 怎么和秒级变化的天基拓扑共处、地面 PoP 如何选择接入域）几乎没有系统性研究，而这恰恰是运营商最关心的问题。</p>
+  </div>
+</div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="num">07</span>参考文献与链接</h2>
+
+<h3>论文</h3>
+<ul class="refs">
+<li><a href="https://arxiv.org/html/2603.25835v1">Starlink Constellation: Deployment, Configuration, and Dynamics</a> — Ali et al., Univ. of Arizona, arXiv:2603.25835 (2026-03)</li>
+<li><a href="https://arxiv.org/html/2604.04498v1">An Experimental Evaluation of Satellite Constellation Emulators</a> — arXiv:2604.04498 (2026-04)</li>
+<li><a href="https://arxiv.org/html/2604.27854">NetSatBench: A Distributed LEO Constellation Emulator with an SRv6 Case Study</a> — Detti et al., CNIT / Tor Vergata, arXiv:2604.27854 (2026-04)</li>
+<li><a href="https://arxiv.org/html/2406.11366v1">xeoverse: A Real-time Simulation Platform for Large LEO Satellite Mega-Constellations</a> — arXiv:2406.11366</li>
+<li><a href="https://arxiv.org/abs/2411.19679">A Lightweight and Scalable Design of Segment Routing in Broadband LEO Constellations Using Landmark-Based Skeleton Graphs</a> — arXiv:2411.19679</li>
+<li><a href="https://arxiv.org/html/2509.10173">Secure and Scalable Rerouting in LEO Satellite Networks</a> — Yanev et al., ETH Zürich / Oxford / armasuisse, arXiv:2509.10173</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3636534.3649362">Stable Hierarchical Routing for Operational LEO Networks</a> — MobiCom 2024</li>
+<li><a href="https://www.ndss-symposium.org/ndss-paper/17346/">Resilient Routing for Low Earth Orbit Mega-Constellation Networks</a> — Kedrowitsch, Black, Yao (Virginia Tech), NDSS/SpaceSec 2024</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3718958.3750491">LeoCC: Making Internet Congestion Control Robust to LEO Satellite Dynamics</a> — SIGCOMM 2025</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3718958.3750524">SaTE: Low-Latency Traffic Engineering for Satellite Networks</a> — SIGCOMM 2025</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3718958.3750525">Small-scale LEO Satellite Networking for Global-scale Demands</a> — SIGCOMM 2025</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3718958.3750522">Direct-to-Cell Satellite Network without Satellite Navigation</a> — SIGCOMM 2025</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3735358.3735384">Topology-Adaptive LEO Satellite Network Telemetry via Graph Isomorphism and Topology Partitioning</a> — APNet 2025</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3663408.3663430">OpenSN: An Open Source Library for Emulating LEO Satellite Networks</a> — APNet 2024</li>
+<li><a href="https://arxiv.org/html/2506.00283v7">Direct-to-Cell: A First Look into Starlink's Direct Satellite-to-Device RAN</a> — arXiv:2506.00283</li>
+<li><a href="https://arxiv.org/html/2605.05843v1">Comparative Analysis of Direct-to-Cell (D2C) and 3GPP Non-Terrestrial Networks (NTN)</a> — arXiv:2605.05843</li>
+<li><a href="https://arxiv.org/html/2501.13280v1">Time-Dependent Network Topology Optimization for LEO Satellite Constellations</a> — arXiv:2501.13280</li>
+<li><a href="https://arxiv.org/pdf/2310.07646">LEO Satellite Networking Relaunched: Survey and Current Research Challenges</a> — 综述</li>
+<li><a href="https://doi.org/10.3390/app152413080">Hierarchical Load-Balanced Routing Optimization for Mega-Constellations via Geographic Partitioning</a> — Applied Sciences 2025</li>
+<li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0273117725011810">Geographic-based Failure-Tolerant Routing for LEO Mega-Constellations</a> — Advances in Space Research 2025</li>
+</ul>
+
+<h3>标准与架构文档</h3>
+<ul class="refs">
+<li><a href="https://datatracker.ietf.org/doc/html/draft-li-arch-sat-04">A Routing Architecture for Satellite Networks</a> — Tony Li (Juniper), IETF draft-li-arch-sat-04，已由 RFC 9717 收录</li>
+<li><a href="https://www.gfnds.com/uploads/20250818/e63c6131118296b9f6460ef63a2612fa.pdf">《卫星互联网承载网技术白皮书》</a> — 第九届未来网络发展大会，2025-08</li>
+</ul>
+
+<h3>开源代码</h3>
+<ul class="refs">
+<li><a href="https://github.com/snkas/hypatia">Hypatia</a> — ns-3 包级 LEO 仿真框架（satgenpy / ns3-sat-sim / satviz，MIT + GPLv2）</li>
+<li><a href="https://github.com/SpaceNetLab/StarryNet">StarryNet</a> — Docker 容器化星座仿真器</li>
+<li><a href="https://opensn-library.github.io/">OpenSN</a> — etcd 解耦架构的 LEO 仿真库</li>
+<li><a href="https://openfogstack.github.io/celestial/">Celestial</a> — Firecracker microVM，面向 LEO Edge</li>
+<li><a href="https://github.com/microsoft/CosmicBeats-Simulator">CosmicBeats-Simulator</a> — Microsoft，通信/计算/成像多层建模</li>
+<li><a href="https://github.com/cnes/opensand">OpenSAND</a> — CNES 卫星通信系统仿真</li>
+<li><a href="https://gitlab.inria.fr/jfraire/florasat">FLoRaSat</a> — OMNeT++，LoRa 直连卫星</li>
+<li><a href="https://github.com/ICARUS-ICN/icarus-ndnsim">icarus-ndnsim</a> — ndnSIM 的大规模 LEO 模块</li>
+<li><a href="https://github.com/infonetlijian/Large-Scale-Satellite-Network-Simulator-LSNS">LSNS</a> — 大规模卫星网络仿真器</li>
+<li><a href="https://github.com/Fede-Berga/satellite_routing">satellite_routing</a> · <a href="https://github.com/sat-robustness-simu/nssatroute">nssatroute</a> · <a href="https://github.com/mathias-magnusson/Zone-routing-protocol">Zone-routing-protocol</a> — 路由算法实现</li>
+<li><a href="https://github.com/jwwthu/Satellite-Open-Source">jwwthu/Satellite-Open-Source</a> — 卫星通信开源代码与数据集汇总</li>
+<li><a href="https://github.com/liuwei-network/awesome-satellite-network">liuwei-network/awesome-satellite-network</a> — 按 13 个主题分类的论文与工具清单</li>
+</ul>
+
+<h3>会议</h3>
+<ul class="refs">
+<li><a href="https://conferences.sigcomm.org/sigcomm/2026/">ACM SIGCOMM 2026</a>（丹佛，8/17–8/21）· <a href="https://conferences.sigcomm.org/sigcomm/2026/accepted/">论文列表</a></li>
+<li><a href="https://leo-net-workshop.github.io/2026/">LEO-NET 2026</a>（8/17，SIGCOMM 同址）</li>
+<li><a href="https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/">ACM SIGCOMM 2025 论文列表</a></li>
+<li><a href="https://www.sigmobile.org/mobicom/2026/cfp.html">ACM MobiCom 2026 CFP</a>（Austin，10/26–10/30）</li>
+<li><a href="https://infocom2026.ieee-infocom.org/call-papers">IEEE INFOCOM 2026 CFP</a> · <a href="https://www.usenix.org/conference/nsdi26/call-for-papers">USENIX NSDI '26 CFP</a></li>
+</ul>
+
+<h3>产业动态</h3>
+<ul class="refs">
+<li><a href="https://www.cww.net.cn/article?id=606918">千帆星座 2026 年冲刺 324 颗在轨目标</a> — 通信世界网</li>
+<li><a href="http://www.cww.net.cn/article?id=608054">GW 星座加速组网：卫星互联网低轨 20 组卫星发射</a> — 通信世界网</li>
+<li><a href="https://internet-pros.com/blog/laser-inter-satellite-links-optical-space-communications-2026/">Laser Inter-Satellite Links in 2026</a> — 产业综述</li>
+</ul>
+
+<footer>
+本报告由公开资料整理，数据截至 2026-07-26。数值以原始来源为准；arXiv 预印本结论未经同行评审，引用前请核对最新版本。
+</footer>
+
+</div>
+</body>
+</html>
