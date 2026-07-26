@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 """Scan every paper-pipeline job store on this host, emit one JSON manifest on stdout.
 
-Groups runs by normalized paper title and keeps the best one per paper:
-a clean run (report succeeded, compact PDF rendered, no `error`) always beats a
-degraded one, and among equals the newest wins. Degraded runs are still emitted
-with `clean: false` and a reason, so the page can decide whether to list them.
+Groups runs by the OCR text they were produced from and keeps the best one per
+paper: a clean run (report succeeded, compact PDF rendered, no `error`) always
+beats a degraded one, and among equals the newest wins. Degraded runs are still
+emitted with `clean: false` and a reason, so the page can decide whether to list
+them.
+
+Identity comes from a hash of `full-text.md`, not the title, because the title is
+extracted by the model and earlier backends got it wrong — one OCR source was
+labelled "SARATHI" on the old backend and "Revisiting Pipeline Parallelism" (the
+title actually printed on page 1) on the current one. Keying on the title would
+publish both as separate papers and keep the wrong one alive forever. Titles are
+only the fallback when a run predates `full-text.md`.
 """
+import hashlib
 import json
 import glob
 import os
@@ -23,6 +32,16 @@ def norm_title(t):
     t = (t or "").lower()
     t = re.sub(r"[^a-z0-9]+", " ", t)
     return " ".join(t.split())[:60]
+
+
+def ocr_key(job_dir, title):
+    """Identity of the paper a run analysed: the OCR text it read, when available."""
+    full_text = os.path.join(job_dir, "full-text.md")
+    try:
+        with open(full_text, "rb") as fh:
+            return "ocr:" + hashlib.sha256(fh.read()).hexdigest()[:16]
+    except OSError:
+        return "title:" + norm_title(title)
 
 
 def collect():
@@ -77,6 +96,7 @@ def collect():
                     dir=d,
                     title=meta.get("title") or "(untitled)",
                     norm=norm_title(meta.get("title")),
+                    key=ocr_key(d, meta.get("title")),
                     authors=meta.get("authors") or [],
                     venue=meta.get("venue") or "",
                     year=meta.get("year") or "",
@@ -103,9 +123,9 @@ def collect():
     # Best run per paper: clean wins over degraded, then newest.
     best = {}
     for r in runs:
-        cur = best.get(r["norm"])
+        cur = best.get(r["key"])
         if cur is None or (r["clean"], r["run_date"]) > (cur["clean"], cur["run_date"]):
-            best[r["norm"]] = r
+            best[r["key"]] = r
 
     return dict(
         runs_total=len(runs),

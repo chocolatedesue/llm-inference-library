@@ -34,6 +34,10 @@ BUILD_DATE = subprocess.run(["date", "-u", "+%Y-%m-%d %H:%M UTC"], capture_outpu
 TITLE_FIX = [
     ("an image is worth 16x16 words", "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"),
     ("torch fx practical program capture", "Torch.fx: Practical Program Capture and Transformation for Deep Learning in Python"),
+    (
+        "flexpipe adapting dynamic llm serving",
+        "FlexPipe: Adapting Dynamic LLM Serving Through Inflight Pipeline Refactoring in Fragmented Serverless Clusters",
+    ),
 ]
 
 # SLUG_FIX: published URLs must not move, so pin the slug of every paper that has
@@ -44,14 +48,23 @@ SLUG_FIX = [
     ("deep residual learning for image recognition", "deep-residual-learning-image-recognition"),
     ("flexpipe adapting dynamic llm serving", "flexpipe"),
     ("gpemu a gpu emulator", "gpemu"),
-    ("pipelive efficient live in place", "pipelive"),
     ("realb real time load balancing", "realb"),
-    ("sarathi efficient llm inference", "sarathi"),
     ("servegen workload characterization", "servegen"),
     ("torch fx practical program capture", "torchfx"),
     ("understanding diffusion model serving in production", "understanding-diffusion-model-serving-production"),
     ("tally non intrusive performance isolation", "tally"),
     ("towards high goodput llm serving", "prefill-decode-multiplexing"),
+    # Papers whose only earlier run carried a wrong title; slugged on first
+    # correct listing. `sarathi` and `pipelive` are deliberately absent — they
+    # were never real papers here, just mis-extracted captions for the runs now
+    # listed as Revisiting Pipeline Parallelism and DynaPipe.
+    ("revisiting pipeline parallelism", "revisiting-pipeline-parallelism"),
+    ("dynapipe dynamic layer redistribution", "dynapipe"),
+    ("frontier towards comprehensive", "frontier"),
+    ("memocr layout aware visual memory", "memocr"),
+    ("deterministic inference across tensor parallel", "deterministic-inference"),
+    ("simai unifying architecture design", "simai"),
+    ("tensor parallelism with partially synchronized", "tensor-parallelism-partial-sync"),
 ]
 
 
@@ -182,12 +195,28 @@ def main():
     </section>
 """
 
-    stale_note = ""
-    if stale:
-        stale_note = (
-            f'当前仍有 <strong>{len(stale)}</strong> 篇是早期后端产出（表中橙色标注），'
-            f"正在逐篇用当前配置重跑。"
+    # The note has to describe the table that actually got generated: claims about
+    # an "unreported" column or a section of skipped runs read as evasion once the
+    # thing they refer to is gone.
+    note_parts = [
+        "下表数据全部读自各任务的 <code>usage.json</code>，不是估算值。缓存命中率为 "
+        "<code>cache_read_input_tokens ÷ prompt tokens</code>。"
+    ]
+    if any(not p["reports_tokens"] for p in clean):
+        note_parts.append(
+            "<strong>未上报</strong>表示该后端不返回 token 计数（早期的 <code>agy</code> 后端如此），并非命中率为零。"
         )
+    if degraded:
+        note_parts.append("只收录整条流水线跑完的运行，其余列在下一节。")
+    else:
+        note_parts.append("只收录整条流水线跑完的运行；本次没有中途失败的运行。")
+    if stale:
+        note_parts.append(
+            f"当前仍有 <strong>{len(stale)}</strong> 篇是早期后端产出（表中橙色标注），正在逐篇用当前配置重跑。"
+        )
+    else:
+        note_parts.append(f"这 {n} 篇全部由上面那一套配置产出，因此各行的耗时与 token 可以直接横向比较。")
+    ledger_note = "\n      ".join(note_parts)
 
     html = f"""<!doctype html>
 <html lang="zh-CN">
@@ -320,10 +349,7 @@ paper-pipeline analyze \\
 
     <section class="library shell" aria-labelledby="ledger-title">
       <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2 id="ledger-title">每篇的运行账本</h2></div></div>
-      <p class="pipeline-note">下表数据全部读自各任务的 <code>usage.json</code>，不是估算值。缓存命中率为
-      <code>cache_read_input_tokens ÷ prompt tokens</code>。<strong>未上报</strong>表示该后端不返回 token 计数
-      （早期的 <code>agy</code> 后端如此），并非命中率为零。只收录整条流水线跑完的运行，其余列在下一节。
-      {stale_note}</p>
+      <p class="pipeline-note">{ledger_note}</p>
       <div class="table-wrap">
         <table class="run-table">
           <thead><tr><th>论文</th><th class="num">运行日期</th><th>Prompt</th><th>模型</th><th class="num">OCR 页</th><th class="num">总耗时</th><th class="num">调用</th><th class="num">Prompt token</th><th class="num">缓存命中</th><th class="num">PDF</th></tr></thead>

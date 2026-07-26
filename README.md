@@ -11,7 +11,7 @@
 | 调研报告 | 卫星网络研究调研报告 | `/content/research/leo-satellite-networking-survey.html` |
 | 开源资源 | 开源代码清单 | `/content/resources/open-source-llm-inference-shortlist.html` |
 | 演示文稿 | LLM 推理仿真实验平台 | `/downloads/llm-inference-simulation-platform-slides.pptx` |
-| 论文解构 | 16 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |
+| 论文解构 | 18 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |
 
 下载目录中重复的 ` (1)` 文件与原件大小一致，因此未重复发布。
 
@@ -74,10 +74,16 @@ python3 scripts/build-papers-page.py
 npm run validate
 ```
 
-`collect-runs.py` 会按论文标题归并多次运行，优先保留整条流水线跑完的那次；
-只产出了正文、排版渲染失败的运行不会进入正表，而是列在页面末尾的“未收录的运行”，
-以便上表的口径可被检验。`build-papers-page.py` 里的 `SLUG_FIX` 固定了已发布论文的
-文件名，新增论文才走自动 slug——改动它会让已分享的 PDF 链接失效。
+`collect-runs.py` 按 `full-text.md` 的哈希（即那次运行实际读到的 OCR 文本）归并多次
+运行，而不是按标题——标题由模型抽取，早期后端抽错过：同一份 OCR 在旧后端被标成
+“SARATHI”，在当前后端才得到论文首页真正印着的 “Revisiting Pipeline Parallelism”。
+按标题归并会把两者当成两篇分别发布，错的那篇还会一直留在站上。
+
+归并后优先保留整条流水线跑完的那次；只产出了正文、排版渲染失败的运行不会进入正表，
+而是列在页面末尾的“未收录的运行”，以便上表的口径可被检验。
+
+`build-papers-page.py` 里的 `SLUG_FIX` 固定了已发布论文的文件名，新增论文才走自动
+slug——改动它会让已分享的 PDF 链接失效。`TITLE_FIX` 用来纠正 OCR 返回的全大写标题。
 
 ## 其他托管选项
 

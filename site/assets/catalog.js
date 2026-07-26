@@ -76,7 +76,7 @@ window.CONTENT_ITEMS = [
     category: 'papers',
     type: '运行账本',
     title: '论文解构报告索引',
-    subtitle: "16 篇 · 运行日期、版本与 token",
+    subtitle: "18 篇 · 运行日期、版本与 token",
     description: '一张表看完所有解构报告的运行日期、prompt 版本、OCR 页数、耗时与缓存命中率，并附完整的复现配置与命令。',
     tags: ['运行账本', '流水线', '可复现'],
     href: 'content/papers/index.html',
@@ -124,17 +124,43 @@ window.CONTENT_ITEMS = [
     accent: 'orange'
   },
   {
+    id: 'deterministic-inference',
+    category: 'papers',
+    type: '论文解构',
+    title: "Deterministic Inference across Tensor Parallel Sizes That Eliminates Training–Inference Mismatch",
+    subtitle: "Ziyang Zhang 等",
+    description: "确定性推理对于大语言模型（LLM）应用（如以LLM作为评判者的评估、多智能体系统和强化学习（RL））日益重要。然而，现有的LLM服务框架在张量并行（TP）规模或批大小变化时，即使在贪心解码下也会对相同输入产生不同输出。这源于浮点运算的非…",
+    tags: ['确定性推理', '张量并行', '强化学习'],
+    href: 'downloads/deterministic-inference.pdf',
+    action: '打开 PDF',
+    updated: '2026-07-26',
+    accent: 'green'
+  },
+  {
+    id: 'dynapipe',
+    category: 'papers',
+    type: '论文解构',
+    title: "DynaPipe: Dynamic Layer Redistribution for Efficient Serving of LLMs with Pipeline Parallelism",
+    subtitle: "Hongxin Xu 等",
+    description: "为加速大语言模型（LLM）推理，流水线并行将模型层划分为多个顺序阶段，每个阶段分配给不同设备并发执行。然而，该方法常因尾部阶段计算不均衡而产生流水线气泡：上游阶段仅执行层前向计算，而最后阶段还需处理采样等额外后处理任务，从而引入显著延迟…",
+    tags: ['流水线并行', 'LLM推理', '负载均衡'],
+    href: 'downloads/dynapipe.pdf',
+    action: '打开 PDF',
+    updated: '2026-07-26',
+    accent: 'blue'
+  },
+  {
     id: 'flexpipe',
     category: 'papers',
     type: '论文解构',
     title: "FlexPipe: Adapting Dynamic LLM Serving Through Inflight Pipeline Refactoring in Fragmented Serverless Clusters",
     subtitle: "Yanying Lin 等 · 2026",
-    description: "在生产环境中部署大语言模型（LLM）服务面临着来自无服务器集群中高度多变的请求模式和严重资源碎片化的重大挑战。当前系统依赖于静态流水线配置，难以适应动态的工作负载条件，从而导致显著的效率低下。\n\n我们提出了 FLEXPIPE，这是一种在…",
-    tags: ['大语言模型', '无服务器计算', '流水线并行'],
+    description: "在生产环境中服务大语言模型（LLM）面临着请求模式高度多变以及无服务器集群中资源严重碎片化所带来的重大挑战。现有系统依赖静态的流水线配置，难以适应动态变化的负载条件，导致效率严重低下。我们提出了FLEXPIPE，一个能够在运行时动态重新…",
+    tags: ['LLM Serving', 'Pipeline Parallelism', 'Serverless Computing'],
     href: 'downloads/flexpipe.pdf',
     action: '打开 PDF',
-    updated: '2026-07-20',
-    accent: 'green'
+    updated: '2026-07-26',
+    accent: 'violet'
   },
   {
     id: 'frontier',
@@ -147,7 +173,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/frontier.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'blue'
+    accent: 'orange'
   },
   {
     id: 'gpemu',
@@ -160,7 +186,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/gpemu.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'violet'
+    accent: 'green'
   },
   {
     id: 'memocr',
@@ -173,58 +199,32 @@ window.CONTENT_ITEMS = [
     href: 'downloads/memocr.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'orange'
-  },
-  {
-    id: 'pipelive',
-    category: 'papers',
-    type: '论文解构',
-    title: "PipeLive: Efficient Live In-place Pipeline Parallelism Reconfiguration for Dynamic LLM Serving",
-    subtitle: "Xu Bai 等 · 2026",
-    description: "为了加速大语言模型（LLM）推理，流水线并行将模型层划分为顺序阶段，并分别分配给不同的设备并发执行。然而，由于尾部阶段的计算不均衡，这种方法通常会受到流水线气泡的影响。尽管上游阶段仅关注层的正向传播操作，但最后一个阶段还必须处理诸如采样…",
-    tags: ['Large Language Models', 'Pipeline Parallelism', 'Dynamic Workload Balancing'],
-    href: 'downloads/pipelive.pdf',
-    action: '打开 PDF',
-    updated: '2026-07-20',
-    accent: 'green'
+    accent: 'blue'
   },
   {
     id: 'realb',
     category: 'papers',
     type: '论文解构',
     title: "ReaLB: Real-Time Load Balancing for Multimodal MoE Inference",
-    subtitle: "Yu Wang 等 · 2026",
-    description: "混合专家（MoE）架构在现代大语言模型和多模态模型中被广泛使用。然而，不同模态之间高度动态且倾斜的专家工作负载往往限制了推理效率。在具有大批量大小的预填充（prefill）阶段，视觉 Token 经常在输入序列中占据主导地位。在专家并行…",
-    tags: ['混合专家模型 (MoE)', '负载均衡', '多模态大模型'],
+    subtitle: "Yingping Wang 等",
+    description: "混合专家（MoE）架构广泛应用于现代大语言模型和多模态模型中。然而，推理效率常常受到跨不同模态高度动态且倾斜的专家负载的限制。在大批量的预填充（prefill）阶段，视觉 token 往往主导输入序列。在专家并行（EP）下，这会导致严重…",
+    tags: ['Mixture-of-Experts', '多模态推理', '专家并行'],
     href: 'downloads/realb.pdf',
     action: '打开 PDF',
-    updated: '2026-07-20',
-    accent: 'blue'
+    updated: '2026-07-26',
+    accent: 'violet'
   },
   {
-    id: 'revisiting-pipeline-parallelism-for-llm-serving',
+    id: 'revisiting-pipeline-parallelism',
     category: 'papers',
     type: '论文解构',
     title: "Revisiting Pipeline Parallelism for LLM Serving",
     subtitle: "Soonjae Hwang 等 · 2026",
     description: "由于单个GPU的显存容量不足以容纳大语言模型（LLM），模型并行已成为在多GPU上服务LLM的标准方法。在在线服务环境中，张量并行凭借其并行执行降低计算延迟的能力，已成为单节点多GPU系统中事实上的标准做法。尽管流水线并行能够提供更高的…",
     tags: ['pipeline parallelism', 'LLM serving', 'chunked prefill'],
-    href: 'downloads/revisiting-pipeline-parallelism-for-llm-serving.pdf',
+    href: 'downloads/revisiting-pipeline-parallelism.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'violet'
-  },
-  {
-    id: 'sarathi',
-    category: 'papers',
-    type: '论文解构',
-    title: "SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills",
-    subtitle: "Amey Agrawal 等 · 2023",
-    description: "由于单张 GPU 的显存容量不足以容纳大语言模型（LLM），模型并行已成为在多张 GPU 上运行 LLM 服务的标准方法。在在线服务环境中，张量并行由于可以通过并行执行来降低计算延迟，已成为单节点多 GPU 系统中事实上的标准方法。尽管…",
-    tags: ['Pipeline Parallelism', 'LLM Serving', 'Chunked Prefill'],
-    href: 'downloads/sarathi.pdf',
-    action: '打开 PDF',
-    updated: '2026-07-20',
     accent: 'orange'
   },
   {
@@ -241,6 +241,19 @@ window.CONTENT_ITEMS = [
     accent: 'green'
   },
   {
+    id: 'simai',
+    category: 'papers',
+    type: '论文解构',
+    title: "SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale Large Language Model Training with Scalability and Precision",
+    subtitle: "Xizheng Wang 等 · 2025",
+    description: "单次大语言模型（LLM）训练所需的大量GPU严重阻碍了对新设计、调优和优化方案的验证，因此需要高效的模拟器。然而，现有模拟器仅针对整个训练流程中的特定粒度进行建模，这从本质上导致了不精确性。本文提出了SimAI，一个旨在精确、高效地大规…",
+    tags: ['LLM训练模拟器', '大规模分布式训练', '网络与集合通信模拟'],
+    href: 'downloads/simai.pdf',
+    action: '打开 PDF',
+    updated: '2026-07-26',
+    accent: 'blue'
+  },
+  {
     id: 'tally',
     category: 'papers',
     type: '论文解构',
@@ -251,7 +264,20 @@ window.CONTENT_ITEMS = [
     href: 'downloads/tally.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'blue'
+    accent: 'violet'
+  },
+  {
+    id: 'tensor-parallelism-partial-sync',
+    category: 'papers',
+    type: '论文解构',
+    title: "Tensor-Parallelism with Partially Synchronized Activations",
+    subtitle: "Itay Lamprecht 等",
+    description: "采用张量并行方式训练和推理大语言模型（LLM）需要大量通信来同步激活值。我们的研究发现，只需对现有做法做少量调整，LLM 便可在不完全同步激活值的情况下完成训练，从而降低带宽需求。我们将这一方法命名为“面向张量并行的通信感知架构”（CA…",
+    tags: ['张量并行', '大语言模型训练', '通信效率'],
+    href: 'downloads/tensor-parallelism-partial-sync.pdf',
+    action: '打开 PDF',
+    updated: '2026-07-26',
+    accent: 'orange'
   },
   {
     id: 'torchfx',
@@ -264,7 +290,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/torchfx.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'violet'
+    accent: 'green'
   },
   {
     id: 'prefill-decode-multiplexing',
@@ -277,7 +303,7 @@ window.CONTENT_ITEMS = [
     href: 'downloads/prefill-decode-multiplexing.pdf',
     action: '打开 PDF',
     updated: '2026-07-26',
-    accent: 'orange'
+    accent: 'blue'
   },
   {
     id: 'understanding-diffusion-model-serving-production',
@@ -285,12 +311,12 @@ window.CONTENT_ITEMS = [
     type: '论文解构',
     title: "Understanding Diffusion Model Serving in Production: A Top-Down Analysis of Workload, Scheduling, and Resource Efficiency",
     subtitle: "Yanying Lin 等 · 2025",
-    description: "本文对生产云环境中扩散模型推理服务所面临的挑战进行了全面分析。我们研究了区分扩散模型服务与传统机器学习（ML）工作负载的独特计算模式和资源需求，揭示了其多阶段流水线（pipeline）架构带来的根本性系统级挑战。我们的分析基于从某商业图…",
-    tags: ['Diffusion Models', 'Model Serving', 'Cloud Computing'],
+    description: "本文对生产云环境中扩散模型服务所面临的挑战进行了全面分析。我们考察了区别于传统机器学习工作负载的独特计算模式和资源需求，揭示了其多阶段流水线架构所带来的系统层面根本性挑战。我们的分析基于一个来自商业图像生成服务的数据集，该数据集在生产运…",
+    tags: ['扩散模型服务', 'GPU调度', '模型缓存'],
     href: 'downloads/understanding-diffusion-model-serving-production.pdf',
     action: '打开 PDF',
-    updated: '2026-07-20',
-    accent: 'green'
+    updated: '2026-07-26',
+    accent: 'violet'
   },
   /* END generated: paper reports */
 ];
