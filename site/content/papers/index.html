@@ -3,21 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="OCR + Agent 流水线生成的论文解构报告索引，含每篇的阶段耗时与 token 用量。">
+  <meta name="description" content="OCR + Agent 流水线生成的论文解构报告索引：每篇的运行日期、prompt 版本、阶段耗时与 token 用量，并附完整复现步骤。">
   <title>论文解构报告索引 · LLM 推理资料库</title>
   <link rel="stylesheet" href="../../assets/site.css">
   <style>
-    .run-table { width:100%; border-collapse:collapse; margin:28px 0 12px; font-size:14px; }
+    .run-table { width:100%; border-collapse:collapse; margin:24px 0 12px; font-size:14px; }
     .run-table th, .run-table td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
     .run-table th { color:var(--muted); font-size:12px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
     .run-table td.num, .run-table th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .run-table td.date { color:var(--muted); font-size:13px; }
     .run-table tbody tr:hover { background:rgba(50,101,214,.04); }
     .run-table a { color:var(--blue); font-weight:640; text-decoration:none; }
     .run-table a:hover { text-decoration:underline; }
+    .run-table a.src { margin-left:8px; color:var(--muted); font-weight:500; font-size:12px; white-space:nowrap; }
+    .run-table.skipped td { color:#5b6577; }
     .table-wrap { overflow-x:auto; }
-    .pipeline-note { max-width:760px; color:#4b5668; }
-    .pipeline-note code, .run-table code { padding:1px 5px; border:1px solid var(--line); border-radius:5px; background:#fff; font-size:12px; }
+    .pipeline-note { max-width:820px; color:#4b5668; }
+    .pipeline-note code, .run-table code, .repro code { padding:1px 5px; border:1px solid var(--line); border-radius:5px; background:#fff; font-size:12px; }
+    .run-table code { display:inline-block; white-space:nowrap; }
     .run-table td.stale code { color:var(--orange); border-color:#f0d3bd; background:#fdf5ef; }
+
+    .updated { display:inline-flex; align-items:center; gap:8px; margin:0 0 18px; padding:5px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--muted); font-size:13px; }
+    .updated b { color:var(--ink); font-weight:640; }
+    .updated .dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
+
+    .repro { padding:52px 0 12px; border-top:1px solid var(--line); }
+    .flow { display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 30px; }
+    .flow li { display:flex; align-items:center; gap:8px; padding:9px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel); font-size:13.5px; }
+    .flow li b { font-weight:640; }
+    .flow li span { color:var(--muted); font-size:12px; }
+    .flow li::before { content:attr(data-n); display:grid; place-items:center; width:20px; height:20px; border-radius:6px; background:rgba(50,101,214,.1); color:var(--blue); font-size:11px; font-weight:760; }
+    .flow-arrow { align-self:center; color:var(--muted); font-size:13px; }
+    .repro-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:18px; margin-top:8px; }
+    .repro-card { padding:20px 22px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:var(--shadow); }
+    .repro-card h3 { margin:0 0 6px; font-size:15px; }
+    .repro-card p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+    .repro pre { margin:0; padding:14px 16px; overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:#f8fafc; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; line-height:1.7; }
+    .repro pre b { color:var(--blue); font-weight:600; }
+    .repro pre i { color:var(--muted); font-style:normal; }
+    .versions { display:flex; flex-wrap:wrap; gap:0; margin:26px 0 0; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--panel); }
+    .versions div { flex:1 1 150px; padding:14px 18px; border-right:1px solid var(--line); }
+    .versions div:last-child { border-right:0; }
+    .versions dt { margin:0 0 3px; color:var(--muted); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
+    .versions dd { margin:0; font-size:14px; font-weight:600; }
+    @media (max-width:640px) { .flow-arrow { display:none; } }
   </style>
 </head>
 <body>
@@ -33,47 +62,116 @@
   <main>
     <section class="hero shell">
       <p class="eyebrow">PIPELINE OUTPUT / 2026</p>
-      <h1>13 篇论文的结构化解构报告</h1>
-      <p class="intro">每份报告都由同一条流水线生成：云端 OCR 转逐页 Markdown，再依次做全文分析、逐图视觉分析、报告合成与布局 DSL，最后由 Pandoc + Typst 编译成图左文右的紧凑 PDF。</p>
+      <h1>16 篇论文的结构化解构报告</h1>
+      <p class="updated"><span class="dot" aria-hidden="true"></span>本页生成于 <b>2026-07-26 12:08 UTC</b> · 最新一次论文运行 <b>2026-07-26</b></p>
+      <p class="intro">每份报告都由同一条流水线生成：云端 OCR 转逐页 Markdown，再依次做全文分析、逐图视觉分析、报告合成与布局 DSL，最后由 Pandoc + Typst 编译成图左文右的紧凑 PDF。下表与本页的每个数字都读自各任务的运行账本，不是手工誊写。</p>
       <div class="stat-row" aria-label="运行概览">
-        <div><strong>13</strong><span>已解构论文</span></div>
-        <div><strong>220</strong><span>OCR 页数</span></div>
-        <div><strong>105</strong><span>模型调用次数</span></div>
+        <div><strong>16</strong><span>已解构论文</span></div>
+        <div><strong>280</strong><span>OCR 页数</span></div>
+        <div><strong>134</strong><span>模型调用次数</span></div>
+        <div><strong>81%</strong><span>平均缓存命中</span></div>
       </div>
     </section>
 
-    <section class="library shell">
-      <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2>每篇的运行账本</h2></div></div>
+    <section class="repro shell" aria-labelledby="repro-title">
+      <p class="eyebrow">HOW IT'S PRODUCED</p>
+      <h2 id="repro-title">这些报告是怎么跑出来的</h2>
+      <p class="pipeline-note">流水线只接收一个 PDF 或它的 URL，其余阶段全部自动串起来。除 OCR 由云端模型完成、排版由 Typst 确定性编译外，中间每一步的推理都由同一个 Agent 后端承担。</p>
+
+      <ol class="flow">
+        <li data-n="1"><b>云端 OCR</b><span>PaddleOCR-VL → 逐页 Markdown + 图片</span></li>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <li data-n="2"><b>全文分析</b><span>论文主张地图</span></li>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <li data-n="3"><b>逐图视觉分析</b><span>每 2 图一批，最多 6 批并行</span></li>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <li data-n="4"><b>报告合成</b><span>compose → critique_refine</span></li>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <li data-n="5"><b>布局 DSL</b><span>校验后的 YAML</span></li>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <li data-n="6"><b>Pandoc + Typst</b><span>紧凑 PDF</span></li>
+      </ol>
+
+      <div class="repro-grid">
+        <div class="repro-card">
+          <h3>后端配置</h3>
+          <p>Agent 阶段不走 API key，而是直接调用已登录的 Claude Code CLI。</p>
+<pre><b>AGENT_BACKEND</b>=cli_agent
+<b>CLI_AGENT_COMMAND</b>=claude
+<b>CLI_AGENT_MODEL</b>=claude-sonnet-5
+<b>CLI_AGENT_ARGS</b>=["--effort","medium",
+  "--dangerously-skip-permissions",
+  "--add-dir","{workspace}","--print"]
+<b>CLI_AGENT_OUTPUT_FORMAT</b>=json
+<b>AGENT_TIMEOUT_SECONDS</b>=900</pre>
+        </div>
+        <div class="repro-card">
+          <h3>运行命令</h3>
+          <p>提交一个 URL 即可跑完全程；复用已有 OCR 产物则跳过云端调用。</p>
+<pre><i># 从 URL 跑完整流程</i>
+paper-pipeline run \
+  --url https://arxiv.org/pdf/2410.07381
+
+<i># 复用已存 OCR，只重做分析</i>
+paper-pipeline analyze \
+  --ocr-dir data/jobs/&lt;job-id&gt;</pre>
+        </div>
+      </div>
+
+      <dl class="versions">
+        <div><dt>Prompt 版本</dt><dd>v11</dd></div>
+        <div><dt>Agent 模型</dt><dd>claude-sonnet-5</dd></div>
+        <div><dt>推理力度</dt><dd>medium</dd></div>
+        <div><dt>OCR 模型</dt><dd>PaddleOCR-VL-1.6</dd></div>
+        <div><dt>图批并行</dt><dd>6</dd></div>
+      </dl>
+    </section>
+
+    <section class="library shell" aria-labelledby="ledger-title">
+      <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2 id="ledger-title">每篇的运行账本</h2></div></div>
       <p class="pipeline-note">下表数据全部读自各任务的 <code>usage.json</code>，不是估算值。缓存命中率为
       <code>cache_read_input_tokens ÷ prompt tokens</code>。<strong>未上报</strong>表示该后端不返回 token 计数
-      （旧的 <code>agy</code> 后端如此），并非命中率为零。只收录阶段账本干净的运行——阶段缺失、重复或含
-      <code>render-failed</code> 的任务会被排除，因为它们的耗时与调用次数描述的是重试而不是实际工作。
-      当前有 <strong>6</strong> 篇仍是旧 prompt 版本产出（表中橙色标注），正在逐篇重跑。</p>
+      （早期的 <code>agy</code> 后端如此），并非命中率为零。只收录整条流水线跑完的运行，其余列在下一节。
+      当前仍有 <strong>5</strong> 篇是早期后端产出（表中橙色标注），正在逐篇用当前配置重跑。</p>
       <div class="table-wrap">
         <table class="run-table">
-          <thead><tr><th>论文</th><th>Prompt</th><th>模型</th><th class="num">OCR 页</th><th class="num">总耗时</th><th class="num">调用</th><th class="num">Prompt token</th><th class="num">缓存命中</th><th class="num">PDF</th></tr></thead>
+          <thead><tr><th>论文</th><th class="num">运行日期</th><th>Prompt</th><th>模型</th><th class="num">OCR 页</th><th class="num">总耗时</th><th class="num">调用</th><th class="num">Prompt token</th><th class="num">缓存命中</th><th class="num">PDF</th></tr></thead>
           <tbody>
-<tr><td><a href="../../downloads/image-worth-16x16-words.pdf">An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">22</td><td class="num">717s</td><td class="num">10</td><td class="num">3,759,553</td><td class="num">86%</td><td class="num">3219 KB</td></tr>
-<tr><td><a href="../../downloads/attention-all-you-need.pdf">Attention Is All You Need</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">15</td><td class="num">562s</td><td class="num">7</td><td class="num">1,348,260</td><td class="num">81%</td><td class="num">2117 KB</td></tr>
-<tr><td><a href="../../downloads/deep-residual-learning-image-recognition.pdf">Deep Residual Learning for Image Recognition</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">12</td><td class="num">709s</td><td class="num">8</td><td class="num">1,471,793</td><td class="num">77%</td><td class="num">1416 KB</td></tr>
-<tr><td><a href="../../downloads/flexpipe.pdf">FlexPipe: Adapting Dynamic LLM Serving Through Inflight Pipeline Refactoring in Fragmented Serverless Clusters</a></td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">17</td><td class="num">330s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">1243 KB</td></tr>
-<tr><td><a href="../../downloads/gpemu.pdf">GPEmu: A GPU Emulator for Faster and Cheaper Prototyping and Evaluation of Deep Learning System Research</a></td><td class="stale"><code>v10</code></td><td class="stale"><code>gemini-3.6-flash-medium</code></td><td class="num">14</td><td class="num">457s</td><td class="num">9</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">1167 KB</td></tr>
-<tr><td><a href="../../downloads/pipelive.pdf">PipeLive: Efficient Live In-place Pipeline Parallelism Reconfiguration for Dynamic LLM Serving</a></td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">23</td><td class="num">292s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">855 KB</td></tr>
-<tr><td><a href="../../downloads/realb.pdf">ReaLB: Real-Time Load Balancing for Multimodal MoE Inference</a></td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">19</td><td class="num">325s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">2341 KB</td></tr>
-<tr><td><a href="../../downloads/sarathi.pdf">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a></td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">18</td><td class="num">334s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">799 KB</td></tr>
-<tr><td><a href="../../downloads/servegen.pdf">ServeGen: Workload Characterization and Generation of Large Language Model Serving in Production</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">16</td><td class="num">806s</td><td class="num">10</td><td class="num">2,440,547</td><td class="num">80%</td><td class="num">2496 KB</td></tr>
-<tr><td><a href="../../downloads/torchfx.pdf">Torch.fx: Practical Program Capture and Transformation for Deep Learning in Python</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">14</td><td class="num">642s</td><td class="num">6</td><td class="num">996,837</td><td class="num">77%</td><td class="num">477 KB</td></tr>
-<tr><td><a href="../../downloads/understanding-diffusion-model-serving-production.pdf">Understanding Diffusion Model Serving in Production: A Top-Down Analysis of Workload, Scheduling, and Resource Efficiency</a></td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">15</td><td class="num">292s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">922 KB</td></tr>
-          <tr><td><a href="../../downloads/tally.pdf">Tally: Non-Intrusive Performance Isolation for Concurrent Deep Learning Workloads</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">17</td><td class="num">754s</td><td class="num">10</td><td class="num">1,343,009</td><td class="num">77%</td><td class="num">1294 KB</td></tr>
-<tr><td><a href="../../downloads/prefill-decode-multiplexing.pdf">Towards High-Goodput LLM Serving with Prefill-decode Multiplexing</a></td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">18</td><td class="num">901s</td><td class="num">10</td><td class="num">3,113,730</td><td class="num">83%</td><td class="num">1600 KB</td></tr>
+<tr><td><a href="../../downloads/image-worth-16x16-words.pdf">An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">22</td><td class="num">717s</td><td class="num">10</td><td class="num">3,759,553</td><td class="num">86%</td><td class="num">3220 KB</td></tr>
+<tr><td><a href="../../downloads/attention-all-you-need.pdf">Attention Is All You Need</a> <a class="src" href="https://arxiv.org/abs/1706.03762" rel="noopener">arXiv:1706.03762</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">15</td><td class="num">562s</td><td class="num">7</td><td class="num">1,348,260</td><td class="num">81%</td><td class="num">2117 KB</td></tr>
+<tr><td><a href="../../downloads/deep-residual-learning-image-recognition.pdf">Deep Residual Learning for Image Recognition</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">12</td><td class="num">709s</td><td class="num">8</td><td class="num">1,471,793</td><td class="num">77%</td><td class="num">1417 KB</td></tr>
+<tr><td><a href="../../downloads/flexpipe.pdf">FlexPipe: Adapting Dynamic LLM Serving Through Inflight Pipeline Refactoring in Fragmented Serverless Clusters</a> <a class="src" href="https://doi.org/10.1145/3767295.3769316" rel="noopener">原文</a></td><td class="num date">2026-07-20</td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">17</td><td class="num">330s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">1244 KB</td></tr>
+<tr><td><a href="../../downloads/frontier.pdf">Frontier: Towards Comprehensive and Accurate LLM Inference Simulation</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">20</td><td class="num">713s</td><td class="num">10</td><td class="num">2,908,571</td><td class="num">81%</td><td class="num">1513 KB</td></tr>
+<tr><td><a href="../../downloads/gpemu.pdf">GPEmu: A GPU Emulator for Faster and Cheaper Prototyping and Evaluation of Deep Learning System Research</a> <a class="src" href="https://doi.org/10.14778/3725688.3725716" rel="noopener">DOI</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">14</td><td class="num">924s</td><td class="num">10</td><td class="num">3,479,609</td><td class="num">82%</td><td class="num">1318 KB</td></tr>
+<tr><td><a href="../../downloads/memocr.pdf">MemOCR: Layout-Aware Visual Memory for Efficient Long-Horizon Reasoning</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">22</td><td class="num">958s</td><td class="num">8</td><td class="num">2,991,370</td><td class="num">86%</td><td class="num">1661 KB</td></tr>
+<tr><td><a href="../../downloads/pipelive.pdf">PipeLive: Efficient Live In-place Pipeline Parallelism Reconfiguration for Dynamic LLM Serving</a> <a class="src" href="https://arxiv.org/abs/2604.12171" rel="noopener">arXiv:2604.12171</a></td><td class="num date">2026-07-20</td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">23</td><td class="num">292s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">855 KB</td></tr>
+<tr><td><a href="../../downloads/realb.pdf">ReaLB: Real-Time Load Balancing for Multimodal MoE Inference</a> <a class="src" href="https://arxiv.org/abs/2604.19503" rel="noopener">arXiv:2604.19503</a></td><td class="num date">2026-07-20</td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">19</td><td class="num">325s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">2342 KB</td></tr>
+<tr><td><a href="../../downloads/revisiting-pipeline-parallelism-for-llm-serving.pdf">Revisiting Pipeline Parallelism for LLM Serving</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">18</td><td class="num">753s</td><td class="num">10</td><td class="num">2,467,098</td><td class="num">80%</td><td class="num">2645 KB</td></tr>
+<tr><td><a href="../../downloads/sarathi.pdf">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a> <a class="src" href="https://arxiv.org/abs/2308.16369" rel="noopener">arXiv:2308.16369</a></td><td class="num date">2026-07-20</td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">18</td><td class="num">334s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">799 KB</td></tr>
+<tr><td><a href="../../downloads/servegen.pdf">ServeGen: Workload Characterization and Generation of Large Language Model Serving in Production</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">16</td><td class="num">806s</td><td class="num">10</td><td class="num">2,440,547</td><td class="num">80%</td><td class="num">2496 KB</td></tr>
+<tr><td><a href="../../downloads/tally.pdf">Tally: Non-Intrusive Performance Isolation for Concurrent Deep Learning Workloads</a> <a class="src" href="https://arxiv.org/abs/2410.07381" rel="noopener">arXiv:2410.07381</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">17</td><td class="num">754s</td><td class="num">10</td><td class="num">1,343,009</td><td class="num">77%</td><td class="num">1294 KB</td></tr>
+<tr><td><a href="../../downloads/torchfx.pdf">Torch.fx: Practical Program Capture and Transformation for Deep Learning in Python</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">14</td><td class="num">642s</td><td class="num">6</td><td class="num">996,837</td><td class="num">77%</td><td class="num">478 KB</td></tr>
+<tr><td><a href="../../downloads/prefill-decode-multiplexing.pdf">Towards High-Goodput LLM Serving with Prefill-decode Multiplexing</a> <a class="src" href="https://doi.org/10.1145/3779212.3790236" rel="noopener">DOI</a></td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td class="num">18</td><td class="num">901s</td><td class="num">10</td><td class="num">3,113,730</td><td class="num">83%</td><td class="num">1600 KB</td></tr>
+<tr><td><a href="../../downloads/understanding-diffusion-model-serving-production.pdf">Understanding Diffusion Model Serving in Production: A Top-Down Analysis of Workload, Scheduling, and Resource Efficiency</a> <a class="src" href="https://doi.org/10.1145/3772052.3772206" rel="noopener">原文</a></td><td class="num date">2026-07-20</td><td class="stale"><code>v3</code></td><td class="stale"><code>agy</code></td><td class="num">15</td><td class="num">292s</td><td class="num">7</td><td class="num">未上报</td><td class="num">未上报</td><td class="num">922 KB</td></tr>
           </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="library shell" aria-labelledby="skipped-title">
+      <div class="section-heading"><div><p class="eyebrow">NOT LISTED</p><h2 id="skipped-title">未收录的 4 次运行</h2></div></div>
+      <p class="pipeline-note">这些运行的正文报告已经产出，但整条流水线没有跑完，因此它们的耗时与调用次数描述的是一次中断，而不是一份完整产物。列在这里是为了让上表的口径可被检验，而不是让失败悄悄消失。</p>
+      <div class="table-wrap">
+        <table class="run-table skipped">
+          <thead><tr><th>论文</th><th class="num">运行日期</th><th>Prompt</th><th>模型</th><th>未收录原因</th></tr></thead>
+          <tbody><tr><td>Deterministic Inference across Tensor Parallel Sizes That Eliminates Training–Inference Mismatch</td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td>尚未渲染出 PDF</td></tr><tr><td>Harnessing the Power of LLMs in Practice: A Survey on ChatGPT and Beyond</td><td class="num date">2026-07-20</td><td><code>v3</code></td><td><code>agy</code></td><td>尚未渲染出 PDF</td></tr><tr><td>SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale Large Language Model Training with Scalability and Precision</td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td>报告已生成，但排版渲染失败</td></tr><tr><td>Tensor-Parallelism with Partially Synchronized Activations</td><td class="num date">2026-07-26</td><td><code>v11</code></td><td><code>claude-sonnet-5</code></td><td>报告已生成，但排版渲染失败</td></tr></tbody>
         </table>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="shell"><span>LLM 推理资料库</span><span>静态托管 · 无数据库 · 易于迁移</span></div>
+    <div class="shell"><span>LLM 推理资料库</span><span>本页由运行账本自动生成 · 2026-07-26 12:08 UTC</span></div>
   </footer>
 </body>
 </html>

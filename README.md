@@ -11,7 +11,7 @@
 | 调研报告 | 卫星网络研究调研报告 | `/content/research/leo-satellite-networking-survey.html` |
 | 开源资源 | 开源代码清单 | `/content/resources/open-source-llm-inference-shortlist.html` |
 | 演示文稿 | LLM 推理仿真实验平台 | `/downloads/llm-inference-simulation-platform-slides.pptx` |
-| 论文解构 | 12 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |
+| 论文解构 | 16 篇论文报告 PDF + 运行账本索引 | `/content/papers/index.html` |
 
 下载目录中重复的 ` (1)` 文件与原件大小一致，因此未重复发布。
 
@@ -56,6 +56,28 @@ npm start
 4. 运行 `npm run validate`，确认新登记的 `href` 存在，再提交并推送。
 
 已发布的 `href` 就是稳定 URL。需要“重命名”时，建议保留旧文件或建立跳转页，避免已分享的链接失效。
+
+## 更新论文解构报告
+
+论文那一类不手工维护：`site/content/papers/index.html`、`catalog.js` 中的论文条目、
+首页的报告篇数，全部由脚本从流水线的运行账本重新生成。新跑完一批论文后：
+
+```bash
+# 1. 在跑流水线的机器上导出运行清单
+python3 scripts/collect-runs.py > /tmp/runs.json
+
+# 2. 把每次干净运行的 report.compact.pdf 取到本地，按 <job-id>.pdf 命名
+mkdir -p /tmp/lil-pdfs   # scp <host>:<job-dir>/report.compact.pdf /tmp/lil-pdfs/<job-id>.pdf
+
+# 3. 重新生成页面与清单
+python3 scripts/build-papers-page.py
+npm run validate
+```
+
+`collect-runs.py` 会按论文标题归并多次运行，优先保留整条流水线跑完的那次；
+只产出了正文、排版渲染失败的运行不会进入正表，而是列在页面末尾的“未收录的运行”，
+以便上表的口径可被检验。`build-papers-page.py` 里的 `SLUG_FIX` 固定了已发布论文的
+文件名，新增论文才走自动 slug——改动它会让已分享的 PDF 链接失效。
 
 ## 其他托管选项
 
