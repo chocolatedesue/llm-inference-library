@@ -191,6 +191,28 @@ slug 也复用 `build-papers-page.py` 的 `SLUG_FIX`，不会和已发布链接�
 因此一个包约 100–200KB 而不是 9MB。代价是不能"解压即重编译"——要重新渲染得取回原文重跑流水线，
 或者用 `report*.typ` 配自己的图片资源编译。这是拿"可检验"换"仓库不膨胀"。
 
+## 流水线换了最后一步之后（只重渲染，不重跑）
+
+排版阶段升级（字体、版式、出处样式）后，站上的 PDF 还是旧样式。**不要重跑整条流水线**：那会重新 OCR、
+重新合成正文，产出的是另一份报告，台账页上的运行记录也就不再描述已发布的内容了。只重放最后一步：
+
+```bash
+python3 scripts/restyle-published.py --host yqh2 --dry-run   # 先看要动哪些
+python3 scripts/restyle-published.py --host yqh2 --only servegen
+python3 scripts/restyle-published.py --host yqh2             # 全量
+npm run covers && npm run validate
+```
+
+它对每篇做的事：rsync job 目录（排除 `input/`）→ `paper-pipeline render --job <id> --layout <既有 layout>`
+→ 覆盖 `site/downloads/<slug>.pdf` → 重建运行数据包。关键是 `--layout` 复用既有的排版 DSL，
+**跳过布局模型调用**，所以整个过程没有 API 调用、结果确定：正文不变、配图位置不变，只有样式变。
+`input/source.pdf` 不需要（它只用于重切高清图，缺失时 `upgrade_job_ocr_assets` 直接跳过，
+沿用已发布 PDF 用的那批图）。18 篇实测约 1 分钟，每篇 Typst 编译约 3 秒。
+
+样式变化会让页数增加 1–2 页（字号行距变化所致），这是预期的；脚本会把页数变化标出来。
+台账页那张表里的 `PDF` 体积列来自上一次运行清单重建，重渲染后会略偏小，下次跑
+`build-papers-page.py` 时自动对齐。
+
 ## 其他托管选项
 
 - **Cloudflare Pages**：连接 GitHub 仓库；构建命令留空；输出目录填 `site`。

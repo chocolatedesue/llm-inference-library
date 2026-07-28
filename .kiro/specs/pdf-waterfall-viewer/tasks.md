@@ -29,6 +29,9 @@
   `build-papers-page.py` 在包存在时自动输出 `runData`
 - [x] 17. 阅读器与卡片显示「运行数据 ↓」下载入口；validate 校验 manual 运行的 PDF/封面/数据包齐备
 
+- [x] 18. `scripts/restyle-published.py`：用新排版阶段重渲染已发布 18 篇（复用既有 layout，无模型调用，
+  约 1 分钟），并同步刷新封面与运行数据包
+
 ## 未做 / 待定
 
 - [ ] A. 台账表格里的裸 PDF 链接是否也改走阅读器？（现在仍直链 `../../downloads/<slug>.pdf`）
@@ -41,6 +44,8 @@
 - [ ] I. 手工补齐其余 11 篇的 arXiv/DOI（`PAPER_SOURCES` 里已留注释示例）
 - [ ] J. Aegaeon 目前只在 manual 块里；等它进运行清单后应改为由 `build-papers-page.py` 生成，并从 `manual-papers.txt` 移除
 - [ ] K. 台账页（运行账本表）尚未包含 manual 运行，Aegaeon 不在表里
+- [ ] L. 台账表的 `PDF` 体积列是重渲染前的数字，下次 `build-papers-page.py` 会自动对齐
+- [ ] M. 18 篇现在是「v11 正文 + 新样式」，只有 Aegaeon 是「v12 正文 + 新样式」；要统一得重跑合成（有成本）
 - [ ] F. 提交与推送到 `chocolatedesue/llm-inference-library`（**需用户确认**）
 
 ## 回归清单（改动阅读器后跑一遍）
