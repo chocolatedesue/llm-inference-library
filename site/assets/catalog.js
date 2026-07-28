@@ -106,7 +106,7 @@ window.CONTENT_ITEMS = [
     description: "虽然 Transformer 架构已成为自然语言处理任务事实上的标准，但其在计算机视觉领域的应用仍然有限。在视觉任务中，注意力机制要么与卷积网络结合使用，要么在保持卷积网络整体结构不变的情况下用于替换其部分组件。我们证明这种对 CNN …",
     tags: ['Vision Transformer', '图像分类', '自注意力机制'],
     href: 'downloads/image-worth-16x16-words.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'blue'
   },
@@ -119,7 +119,7 @@ window.CONTENT_ITEMS = [
     description: "目前主流的序列转导模型都基于复杂的循环神经网络或卷积神经网络，包含一个编码器和一个解码器。表现最好的模型还会通过注意力机制将编码器和解码器连接起来。我们提出了一种新的简单网络架构——Transformer，它完全基于注意力机制，彻底摒弃…",
     tags: ['Transformer', '自注意力机制', '机器翻译'],
     href: 'downloads/attention-all-you-need.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'violet'
   },
@@ -132,7 +132,7 @@ window.CONTENT_ITEMS = [
     description: "更深的神经网络更难训练。我们提出一种残差学习框架，以简化比以往使用的网络更深得多的网络的训练。我们将网络层显式地重新表述为学习相对于层输入的残差函数，而不是学习无参照的函数。我们通过大量实验证据表明，这些残差网络更容易优化，并且能够从显…",
     tags: ['深度学习', '残差网络', '图像分类'],
     href: 'downloads/deep-residual-learning-image-recognition.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'orange'
   },
@@ -145,7 +145,7 @@ window.CONTENT_ITEMS = [
     description: "确定性推理对于大语言模型（LLM）应用（如以LLM作为评判者的评估、多智能体系统和强化学习（RL））日益重要。然而，现有的LLM服务框架在张量并行（TP）规模或批大小变化时，即使在贪心解码下也会对相同输入产生不同输出。这源于浮点运算的非…",
     tags: ['确定性推理', '张量并行', '强化学习'],
     href: 'downloads/deterministic-inference.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'green'
   },
@@ -158,7 +158,7 @@ window.CONTENT_ITEMS = [
     description: "为加速大语言模型（LLM）推理，流水线并行将模型层划分为多个顺序阶段，每个阶段分配给不同设备并发执行。然而，该方法常因尾部阶段计算不均衡而产生流水线气泡：上游阶段仅执行层前向计算，而最后阶段还需处理采样等额外后处理任务，从而引入显著延迟…",
     tags: ['流水线并行', 'LLM推理', '负载均衡'],
     href: 'downloads/dynapipe.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'blue'
   },
@@ -171,7 +171,7 @@ window.CONTENT_ITEMS = [
     description: "在生产环境中服务大语言模型（LLM）面临着请求模式高度多变以及无服务器集群中资源严重碎片化所带来的重大挑战。现有系统依赖静态的流水线配置，难以适应动态变化的负载条件，导致效率严重低下。我们提出了FLEXPIPE，一个能够在运行时动态重新…",
     tags: ['LLM Serving', 'Pipeline Parallelism', 'Serverless Computing'],
     href: 'downloads/flexpipe.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'violet'
   },
@@ -184,7 +184,7 @@ window.CONTENT_ITEMS = [
     description: "现代大语言模型（LLM）服务已不再是同质化或单体式的。生产系统如今融合了分离式执行、复杂的并行策略、运行时优化技术，以及推理、智能体和强化学习（RL）rollout等有状态工作负载。仿真是探索这一不断扩展的设计空间的有效手段，但现有仿真…",
     tags: ['LLM推理模拟', '分离式服务架构', '离散事件仿真'],
     href: 'downloads/frontier.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'orange'
   },
@@ -197,7 +197,7 @@ window.CONTENT_ITEMS = [
     description: "深度学习（DL）系统研究常常受限于GPU可用性有限和成本高昂的问题。本文提出GPEmu，一种无需使用真实GPU即可实现更快、更廉价地对深度学习系统研究进行原型设计和评估的GPU仿真器。GPEmu具备四项创新特性：时间仿真、内存仿真、分布…",
     tags: ['GPU仿真', '深度学习系统', '分布式训练'],
     href: 'downloads/gpemu.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'green'
   },
@@ -210,7 +210,7 @@ window.CONTENT_ITEMS = [
     description: "长时序智能体推理需要将不断增长的交互历史有效压缩进有限的上下文窗口。现有的多数记忆系统将历史初始化为文本，其中每个 token 的成本是均等的，并随长度线性增长，常常将有限的预算浪费在低价值细节上。为此，我们提出了 MemOCR，一种多…",
     tags: ['长时序推理', '视觉记忆', '上下文压缩'],
     href: 'downloads/memocr.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'blue'
   },
@@ -223,7 +223,7 @@ window.CONTENT_ITEMS = [
     description: "混合专家（MoE）架构广泛应用于现代大语言模型和多模态模型中。然而，推理效率常常受到跨不同模态高度动态且倾斜的专家负载的限制。在大批量的预填充（prefill）阶段，视觉 token 往往主导输入序列。在专家并行（EP）下，这会导致严重…",
     tags: ['Mixture-of-Experts', '多模态推理', '专家并行'],
     href: 'downloads/realb.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'violet'
   },
@@ -236,7 +236,7 @@ window.CONTENT_ITEMS = [
     description: "由于单个GPU的显存容量不足以容纳大语言模型（LLM），模型并行已成为在多GPU上服务LLM的标准方法。在在线服务环境中，张量并行凭借其并行执行降低计算延迟的能力，已成为单节点多GPU系统中事实上的标准做法。尽管流水线并行能够提供更高的…",
     tags: ['pipeline parallelism', 'LLM serving', 'chunked prefill'],
     href: 'downloads/revisiting-pipeline-parallelism.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'orange'
   },
@@ -249,7 +249,7 @@ window.CONTENT_ITEMS = [
     description: "随着大语言模型（LLM）的广泛采用，为LLM推理请求提供服务已成为一项日益重要的任务，吸引了大量研究进展。实际工作负载在这一过程中发挥着关键作用：它们对于激励和评测服务技术与系统至关重要。然而，由于缺乏全面的工作负载表征，业界对真实世界…",
     tags: ['LLM推理服务', '工作负载表征', '工作负载生成'],
     href: 'downloads/servegen.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'green'
   },
@@ -262,7 +262,7 @@ window.CONTENT_ITEMS = [
     description: "单次大语言模型（LLM）训练所需的大量GPU严重阻碍了对新设计、调优和优化方案的验证，因此需要高效的模拟器。然而，现有模拟器仅针对整个训练流程中的特定粒度进行建模，这从本质上导致了不精确性。本文提出了SimAI，一个旨在精确、高效地大规…",
     tags: ['LLM训练模拟器', '大规模分布式训练', '网络与集合通信模拟'],
     href: 'downloads/simai.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'blue'
   },
@@ -275,7 +275,7 @@ window.CONTENT_ITEMS = [
     description: "GPU利用率不足是许多生产环境深度学习集群面临的重要问题，会导致作业排队时间延长和运营成本增加。GPU共享是缓解该低效问题的一种有前景的方案，它允许多个工作负载在单块GPU上并发执行，从而提高资源利用率。然而，现有GPU共享机制存在集成…",
     tags: ['GPU sharing', 'performance isolation', 'deep learning systems'],
     href: 'downloads/tally.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'violet'
   },
@@ -288,7 +288,7 @@ window.CONTENT_ITEMS = [
     description: "采用张量并行方式训练和推理大语言模型（LLM）需要大量通信来同步激活值。我们的研究发现，只需对现有做法做少量调整，LLM 便可在不完全同步激活值的情况下完成训练，从而降低带宽需求。我们将这一方法命名为“面向张量并行的通信感知架构”（CA…",
     tags: ['张量并行', '大语言模型训练', '通信效率'],
     href: 'downloads/tensor-parallelism-partial-sync.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'orange'
   },
@@ -301,7 +301,7 @@ window.CONTENT_ITEMS = [
     description: "现代深度学习框架提供了嵌入在 Python 中的命令式、即时执行（eager execution）编程接口，以带来高效的开发体验。然而，深度学习从业者有时需要捕获并变换程序结构，以用于性能优化、可视化、分析和硬件集成。我们研究了深度学习…",
     tags: ['PyTorch', '程序捕获', '程序变换'],
     href: 'downloads/torchfx.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'green'
   },
@@ -314,7 +314,7 @@ window.CONTENT_ITEMS = [
     description: "大语言模型（LLM）服务需要同时满足预填充（prefill）和解码（decode）阶段严格的服务级别目标（SLO）。现有方案中，一些将两个阶段分离部署，可能导致资源闲置或计算冗余；另一些将预填充阶段切分为多个块并与解码迭代融合，造成SL…",
     tags: ['LLM Serving', 'PD-Multiplexing', 'Goodput'],
     href: 'downloads/prefill-decode-multiplexing.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'blue'
   },
@@ -327,7 +327,7 @@ window.CONTENT_ITEMS = [
     description: "本文对生产云环境中扩散模型服务所面临的挑战进行了全面分析。我们考察了区别于传统机器学习工作负载的独特计算模式和资源需求，揭示了其多阶段流水线架构所带来的系统层面根本性挑战。我们的分析基于一个来自商业图像生成服务的数据集，该数据集在生产运…",
     tags: ['扩散模型服务', 'GPU调度', '模型缓存'],
     href: 'downloads/understanding-diffusion-model-serving-production.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '2026-07-26',
     accent: 'violet'
   },
@@ -340,4 +340,50 @@ window.CONTENT_CATEGORIES = [
   { id: 'resources', label: '开源资源' },
   { id: 'papers', label: '论文解构' },
   { id: 'slides', label: '演示文稿' }
+];
+
+/*
+ * 阅读器（reader.html）左侧导航的分层结构。
+ * 手工维护，不由 scripts/build-papers-page.py 生成：论文条目会被重写，这份分组不会。
+ * 新论文若没登记在这里，会落到「未分组」，validate 会提示但不失败。
+ */
+window.PAPER_GROUPS = [
+  {
+    id: 'serving',
+    label: '推理服务与调度',
+    papers: [
+      'dynapipe',
+      'flexpipe',
+      'revisiting-pipeline-parallelism',
+      'prefill-decode-multiplexing',
+      'realb',
+      'understanding-diffusion-model-serving-production',
+      'servegen'
+    ]
+  },
+  {
+    id: 'parallelism',
+    label: '并行与确定性',
+    papers: ['tensor-parallelism-partial-sync', 'deterministic-inference']
+  },
+  {
+    id: 'simulation',
+    label: '仿真与模拟',
+    papers: ['frontier', 'simai', 'gpemu']
+  },
+  {
+    id: 'gpu-systems',
+    label: 'GPU 共享与编译工具',
+    papers: ['tally', 'torchfx']
+  },
+  {
+    id: 'foundation',
+    label: '基础模型与视觉',
+    papers: [
+      'attention-all-you-need',
+      'image-worth-16x16-words',
+      'deep-residual-learning-image-recognition',
+      'memocr'
+    ]
+  }
 ];

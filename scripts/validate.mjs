@@ -53,6 +53,43 @@ for (const href of hrefMatches) {
   }
 }
 
+
+// PDF entries should have first-page covers for the waterfall gallery.
+const pdfHrefs = hrefMatches.filter((href) => /\.pdf$/i.test(href) && !/^(?:https?:|mailto:|#)/.test(href));
+for (const href of pdfHrefs) {
+  const slug = path.basename(href, '.pdf');
+  const cover = path.join('assets', 'covers', `${slug}.jpg`);
+  try {
+    await access(path.join(siteRoot, cover), constants.R_OK);
+    console.log(`✓ pdf cover: ${cover}`);
+  } catch {
+    fail(`Missing PDF cover for ${href} (expected ${cover}). Run: npm run covers`);
+  }
+}
+
+// The reader page and its script must exist for PDF cards to have a target.
+for (const relativePath of ['reader.html', 'assets/reader.js']) {
+  try {
+    await access(path.join(siteRoot, relativePath), constants.R_OK);
+    console.log(`✓ ${relativePath}`);
+  } catch {
+    fail(`Missing required file: ${relativePath}`);
+  }
+}
+
+// Sidebar grouping is hand-maintained; ungrouped papers still render, so warn only.
+const groupedIds = new Set([...catalog.matchAll(/window\.PAPER_GROUPS[\s\S]*$/g)]
+  .flatMap((match) => [...match[0].matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1])));
+const paperSlugs = pdfHrefs
+  .map((href) => path.basename(href, '.pdf'))
+  .filter((slug) => slug !== 'llm-inference-simulation-platform-slides');
+const ungrouped = paperSlugs.filter((slug) => !groupedIds.has(slug));
+if (ungrouped.length) {
+  console.warn(`⚠ 未登记到 window.PAPER_GROUPS 的论文（阅读器里会落到「未分组」）: ${ungrouped.join(', ')}`);
+} else {
+  console.log('✓ every paper PDF is placed in PAPER_GROUPS');
+}
+
 if (process.exitCode) {
   console.error('\nValidation failed.');
 } else {

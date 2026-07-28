@@ -58,6 +58,55 @@ npm start
 
 已发布的 `href` 就是稳定 URL。需要“重命名”时，建议保留旧文件或建立跳转页，避免已分享的链接失效。
 
+## PDF 封面瀑布流与站内阅读器
+
+论文 PDF 有两个入口，职责分开：
+
+- **浏览**：首页「论文解构」分类下的**封面瀑布流**（CSS 多列），封面按 A4 比例预留空间，加载时不抖动。
+- **阅读**：`site/reader.html` —— 左侧按主题分层的目录（分组表在 `catalog.js` 的 `window.PAPER_GROUPS`），
+  右侧 [EmbedPDF](https://github.com/embedpdf/embed-pdf-viewer)（PDFium/WASM）直接阅读，带文本选中、搜索、
+  缩略图、打印。URL 形如 `reader.html?paper=<slug>`，点侧栏走 `pushState`，浏览器后退回到上一篇。
+
+阅读器的几个刻意选择：
+
+- EmbedPDF 从 jsdelivr 加载并**钉死版本** `@embedpdf/snippet@2.14.4`（JS ~1.8MB + pdfium.wasm ~4.5MB），
+  且只在**第一次点开某篇论文时才动态 import**——只逛首页的访客不付这份流量。
+- `fonts: { ui: null, signature: null }` 与 `stamp: { manifests: [] }`：把第三方来源收敛到 jsdelivr 一个，
+  不再请求 Google Fonts。
+- 初始缩放 `ZoomMode.FitPage` + 默认双栏 `SpreadMode.Odd`（第 1 页排在跨页左侧，报告首页就是正文而非书籍封面）。
+  这些报告上边距很大，FitWidth 会让首屏全是空白。双栏是排版完成后才生效的，所以还订阅了
+  `scroll.onLayoutReady`，每份文档就绪后再 `requestZoom(FitPage)` 一次——否则 init 时按单页算出的比例会让跨页超出视口。
+- **关闭内部标签**：工具条的「关闭标签」按钮，或 `Alt+W`（macOS 上即 `⌥W`；判定走 `event.code === 'KeyW'`，因为 `⌥W` 的 `event.key` 是 `∑`）。关掉后切到相邻标签；关掉最后一个则回空态并清掉 URL 上的 `?paper=`。
+  `Ctrl/⌘+W` 绑了同一个动作，但**页面能不能拿到它取决于平台**：
+  - Windows / Linux 的 Chrome / Edge：进全屏后代码会申请 Keyboard Lock（`navigator.keyboard.lock(['KeyW'])`），
+    此时 `Ctrl+W` 归页面。非全屏一律归浏览器。
+  - macOS：实测 Chromium（含 Chrome for Testing 无头与有头）**根本没有 `navigator.keyboard`**，
+    `⌘+W` 无论是否全屏都拦不住。MDN 的兼容表只写 "Chrome 68+"，没标这个平台差异。
+  所以「关闭标签」按钮和 `Alt+W` 才是保底路径。
+- 阅读页**没有站头**：整屏都归目录 + 阅读区，返回链接放在侧栏顶部。
+- **多标签**：点开一篇就在阅读器内部多开一个 tab（标签名取论文短标题），已开过的直接切过去、不重复开。
+  标签由 EmbedPDF 的 document-manager 维护，左侧目录负责"开哪一篇"，标签负责"在开着的几篇之间跳"。
+- **全屏**：工具条的「全屏」把整块 `#readerShell`（含左侧目录）送进 Fullscreen API，所以全屏里还能换论文；
+  `.reader-shell:fullscreen` 要吃满 `100vh`，否则底部会空出站头的 67px。
+- 加载失败（CDN 不可达等）自动退回浏览器自带 PDF 阅读器，仍可阅读与下载。
+
+新论文若没登记进 `window.PAPER_GROUPS`，会落到侧栏的「未分组」；`npm run validate` 会提示但不失败。
+这份分组表放在 `catalog.js` 生成块之外，`build-papers-page.py` 重写论文条目时不会覆盖它。
+
+封面图由每份 PDF 首页渲染，保存在 `site/assets/covers/`：
+
+```bash
+# 依赖 poppler（pdftoppm）。macOS: brew install poppler
+npm run covers
+```
+
+`scripts/build-papers-page.py` 在同步 PDF 后会自动尝试生成封面。校验时若缺封面会失败：
+
+```bash
+npm run covers
+npm run validate
+```
+
 ## 更新论文解构报告
 
 论文那一类不手工维护：`site/content/papers/index.html`、`catalog.js` 中的论文条目、

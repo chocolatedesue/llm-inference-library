@@ -131,6 +131,13 @@ def main():
         shutil.copyfile(src, DOWNLOADS / f"{p['slug']}.pdf")
         p["pdf_kb"] = round((DOWNLOADS / f"{p['slug']}.pdf").stat().st_size / 1024)
 
+    # First-page JPEG covers for the homepage / papers waterfall gallery.
+    cover_script = REPO / "scripts" / "generate-pdf-covers.py"
+    if cover_script.exists():
+        result = subprocess.run([sys.executable, str(cover_script)], check=False)
+        if result.returncode != 0:
+            print("warning: cover generation failed; gallery will fall back to text cards")
+
     # ---- aggregates ------------------------------------------------------
     n = len(clean)
     pages = sum(p["pages"] for p in clean)
@@ -347,6 +354,17 @@ paper-pipeline analyze \\
       </dl>
     </section>
 
+    <section class="library shell" aria-labelledby="gallery-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PDF GALLERY</p>
+          <h2 id="gallery-title">封面瀑布流</h2>
+        </div>
+      </div>
+      <p class="pipeline-note">每张封面取自解构报告首页。点击卡片进入站内阅读器（左侧按主题分层，右侧 EmbedPDF 直接阅读），也可直接下载原 PDF。</p>
+      <div class="content-grid is-waterfall" id="paperGallery" data-base="../../"></div>
+    </section>
+
     <section class="library shell" aria-labelledby="ledger-title">
       <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2 id="ledger-title">每篇的运行账本</h2></div></div>
       <p class="pipeline-note">{ledger_note}</p>
@@ -364,6 +382,8 @@ paper-pipeline analyze \\
   <footer class="site-footer">
     <div class="shell"><span>LLM 推理资料库</span><span>本页由运行账本自动生成 · {BUILD_DATE}</span></div>
   </footer>
+  <script src="../../assets/catalog.js"></script>
+  <script src="../../assets/site.js"></script>
 </body>
 </html>
 """
@@ -403,7 +423,7 @@ paper-pipeline analyze \\
     description: {json.dumps(desc, ensure_ascii=False)},
     tags: [{tags}],
     href: 'downloads/{p["slug"]}.pdf',
-    action: '打开 PDF',
+    action: '在阅读器打开',
     updated: '{p["run_date"]}',
     accent: '{ACCENTS[i % len(ACCENTS)]}'
   }},
@@ -431,12 +451,19 @@ paper-pipeline analyze \\
     )
     CATALOG.write_text(cat)
 
-    # Drop PDFs for papers that are no longer listed (slug changed / run withdrawn).
+    # Drop PDFs / covers for papers that are no longer listed.
     keep = {f"{p['slug']}.pdf" for p in clean}
     for f in DOWNLOADS.glob("*.pdf"):
         if f.name not in keep:
             f.unlink()
             print(f"removed orphan {f.name}")
+    covers = REPO / "site" / "assets" / "covers"
+    if covers.exists():
+        keep_covers = {f"{p['slug']}.jpg" for p in clean}
+        for f in covers.glob("*.jpg"):
+            if f.name not in keep_covers:
+                f.unlink()
+                print(f"removed orphan cover {f.name}")
 
     print(f"papers={n} pages={pages} calls={calls} avg_hit={avg_hit}% stale={len(stale)} degraded={len(degraded)}")
     print(f"latest run {latest_run}, built {BUILD_DATE}")

@@ -127,6 +127,18 @@ paper-pipeline analyze \
       </dl>
     </section>
 
+
+    <section class="library shell" aria-labelledby="gallery-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PDF GALLERY</p>
+          <h2 id="gallery-title">封面瀑布流</h2>
+        </div>
+      </div>
+      <p class="pipeline-note">每张封面取自解构报告首页。点击卡片进入站内阅读器（左侧按主题分层，右侧 EmbedPDF 直接阅读），也可直接下载原 PDF。</p>
+      <div class="content-grid is-waterfall" id="paperGallery" data-base="../../"></div>
+    </section>
+
     <section class="library shell" aria-labelledby="ledger-title">
       <div class="section-heading"><div><p class="eyebrow">RUN LEDGER</p><h2 id="ledger-title">每篇的运行账本</h2></div></div>
       <p class="pipeline-note">下表数据全部读自各任务的 <code>usage.json</code>，不是估算值。缓存命中率为 <code>cache_read_input_tokens ÷ prompt tokens</code>。
@@ -163,5 +175,7 @@ paper-pipeline analyze \
   <footer class="site-footer">
     <div class="shell"><span>LLM 推理资料库</span><span>本页由运行账本自动生成 · 2026-07-26 12:34 UTC</span></div>
   </footer>
+  <script src="../../assets/catalog.js"></script>
+  <script src="../../assets/site.js"></script>
 </body>
 </html>
