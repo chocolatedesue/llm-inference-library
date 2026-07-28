@@ -77,6 +77,28 @@ for (const relativePath of ['reader.html', 'assets/reader.js']) {
   }
 }
 
+// Runs published by scripts/publish-run.py must carry their files.
+const manualList = path.join(root, 'scripts', 'manual-papers.txt');
+let manualSlugs = [];
+try {
+  manualSlugs = (await readFile(manualList, 'utf8'))
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
+} catch { /* no manual runs yet */ }
+
+for (const slug of manualSlugs) {
+  for (const rel of [`downloads/${slug}.pdf`, `assets/covers/${slug}.jpg`, `downloads/runs/${slug}-run.zip`]) {
+    try {
+      await access(path.join(siteRoot, rel), constants.R_OK);
+      console.log(`✓ manual run: ${rel}`);
+    } catch {
+      fail(`Manual run ${slug} is missing ${rel} (re-run scripts/publish-run.py)`);
+    }
+  }
+  if (!catalog.includes(`id: '${slug}'`)) fail(`Manual run ${slug} has no catalog entry`);
+}
+
 // Sidebar grouping is hand-maintained; ungrouped papers still render, so warn only.
 const groupedIds = new Set([...catalog.matchAll(/window\.PAPER_GROUPS[\s\S]*$/g)]
   .flatMap((match) => [...match[0].matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1])));

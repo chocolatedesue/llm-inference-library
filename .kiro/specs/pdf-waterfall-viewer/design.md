@@ -102,6 +102,17 @@ Windows/Linux 的 Chrome/Edge 有这个 API，代码在进全屏时申请 `lock(
 `object-fit:cover`，比在 catalog 里加 `coverW/coverH` 字段更省事，且完全不需要改流水线脚本。
 非 A4 版面（Letter）会被裁掉约 9% 宽度，接受。
 
+### D9 手工发布的运行走独立块 + 保留清单
+`build-papers-page.py` 会按运行清单重写论文条目，并把 `downloads/` 里不在清单中的 PDF 当孤儿删掉。
+所以手工发布必须做两件事，否则下一次同步会静默地删掉文件、抹掉条目：
+条目写进 `catalog.js` 的 `/* BEGIN manual: hand-published runs */` 块（在 generated 块之外），
+slug 写进 `scripts/manual-papers.txt`，让重建脚本把它排除在孤儿清理之外、并计入首页篇数。
+
+### D10 运行数据包只收文本
+一个 job 目录 16MB，其中 `input/source.pdf` 6.6MB、`assets/` 与图片切片 4.5MB+。
+包里只收 `.md/.json/.yaml/.typ`（约 200KB 压缩后），因为可检验性需要的是"模型读到什么、决定了什么、
+怎么排版的"，而图片是第三方内容且已经嵌在发布的 PDF 里。放弃的是"解压即可重编译"。
+
 ## 数据流
 
 ```

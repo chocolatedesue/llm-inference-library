@@ -99,7 +99,8 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 .reader-meta { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
 .reader-meta strong { font-size:14.5px; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .reader-meta span { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.reader-source { align-self:flex-start; margin-top:1px; color:var(--blue); font-size:12px; font-weight:640; text-decoration:none; }
+.reader-meta-links { display:flex; gap:14px; align-items:center; }
+.reader-source { color:var(--blue); font-size:12px; font-weight:640; text-decoration:none; }
 .reader-source:hover { text-decoration:underline; }
 .reader-actions { display:flex; flex:0 0 auto; flex-wrap:nowrap; gap:8px; align-items:center; }
 .reader-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); font:inherit; font-size:12.5px; font-weight:650; text-decoration:none; cursor:pointer; white-space:nowrap; }

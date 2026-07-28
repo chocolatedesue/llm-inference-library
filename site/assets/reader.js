@@ -23,6 +23,7 @@ const el = {
   title: document.querySelector('#docTitle'),
   meta: document.querySelector('#docMeta'),
   source: document.querySelector('#sourceLink'),
+  runData: document.querySelector('#runDataLink'),
   download: document.querySelector('#downloadLink'),
   openTab: document.querySelector('#openTab'),
   shell: document.querySelector('#readerShell'),
@@ -207,6 +208,8 @@ const select = async (id, { push = false, replace = false } = {}) => {
 
   el.title.textContent = item.title || id;
   el.meta.textContent = [item.subtitle, item.venue, ...(item.tags || []).slice(0, 2)].filter(Boolean).join(' · ');
+  el.runData.hidden = !item.runData;
+  if (item.runData) el.runData.href = item.runData;
   const source = sourceOf(item);
   el.source.hidden = !source;
   if (source) {
@@ -294,6 +297,7 @@ const closeActiveTab = async () => {
   el.title.textContent = '选择左侧任意一篇开始阅读';
   el.meta.textContent = `${flat.length} 篇解构报告 · ${grouped.length} 个主题`;
   el.source.hidden = true;
+  el.runData.hidden = true;
   document.title = '论文阅读器 · LLM 推理资料库';
   markActive(null);
   const url = new URL(window.location.href);

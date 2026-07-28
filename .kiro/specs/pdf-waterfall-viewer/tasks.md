@@ -23,6 +23,12 @@
 - [x] 14. 元数据：阅读器与卡片显示 arXiv/DOI/原文链接；`build-papers-page.py` 输出 `source`，
   `catalog.js` 的 `window.PAPER_SOURCES` 作为手工覆盖表（已补齐现有 7 条）
 
+- [x] 15. `scripts/publish-run.py`：发布单次运行（PDF + 运行数据包 + manual catalog 块 + 封面 + 保留清单），
+  支持 `host:path` 远程 job 目录；已用它发布 Aegaeon（v12-preview，17 页）
+- [x] 16. `scripts/fetch-run-bundles.py` + `link-run-bundles.py`：批量拉取已发布 18 篇的运行数据（2.3MB）并挂到 catalog；
+  `build-papers-page.py` 在包存在时自动输出 `runData`
+- [x] 17. 阅读器与卡片显示「运行数据 ↓」下载入口；validate 校验 manual 运行的 PDF/封面/数据包齐备
+
 ## 未做 / 待定
 
 - [ ] A. 台账表格里的裸 PDF 链接是否也改走阅读器？（现在仍直链 `../../downloads/<slug>.pdf`）
@@ -33,6 +39,8 @@
 - [ ] E. 新论文进站后是否要求必须登记分组（把 validate 的警告升级为失败）
 - [ ] H. 上游 `paper-pipeline`：收到 `--url` 时确定性地写入 `links.source`，减少手工补链接（另一个仓库，需单独确认）
 - [ ] I. 手工补齐其余 11 篇的 arXiv/DOI（`PAPER_SOURCES` 里已留注释示例）
+- [ ] J. Aegaeon 目前只在 manual 块里；等它进运行清单后应改为由 `build-papers-page.py` 生成，并从 `manual-papers.txt` 移除
+- [ ] K. 台账页（运行账本表）尚未包含 manual 运行，Aegaeon 不在表里
 - [ ] F. 提交与推送到 `chocolatedesue/llm-inference-library`（**需用户确认**）
 
 ## 回归清单（改动阅读器后跑一遍）

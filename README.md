@@ -143,6 +143,54 @@ npm run validate
 `build-papers-page.py` 里的 `SLUG_FIX` 固定了已发布论文的文件名，新增论文才走自动
 slug——改动它会让已分享的 PDF 链接失效。`TITLE_FIX` 用来纠正 OCR 返回的全大写标题。
 
+## 发布单次运行与原始运行数据
+
+论文那一类平时由运行清单整体重建，但有两种情况走不通：某次运行还没进清单（例如 v12-preview 的重渲染），
+或者只想补上"这份报告是怎么产出的"证据。这两件事各有一个脚本。
+
+**发布一次运行**（PDF + 运行数据 + catalog 条目 + 封面）：
+
+```bash
+# 本地 job 目录
+python3 scripts/publish-run.py /path/to/data/jobs/<job-id> --pdf report.v12-preview.pdf --slug aegaeon
+
+# 流水线主机上的 job 目录（按需 rsync 到临时目录，只取文本与选定 PDF）
+python3 scripts/publish-run.py yqh2:/opt/paper-pipeline/data/jobs/<job-id>
+```
+
+它写入 `site/downloads/<slug>.pdf`、`site/downloads/runs/<slug>-run.zip`、封面，并在 `catalog.js` 的
+**manual 块**里插入条目——那个块在 generated 块之外，重跑 `build-papers-page.py` 不会覆盖。
+slug 会登记进 `scripts/manual-papers.txt`，`build-papers-page.py` 读它来决定"这些 PDF/封面不是孤儿、
+首页篇数要算上"。**发布后记得把 slug 加进 `window.PAPER_GROUPS`**，否则阅读器侧栏会归到「未分组」。
+
+**批量补齐已发布论文的运行数据**：
+
+```bash
+python3 scripts/fetch-run-bundles.py --host yqh2      # --dry-run 先看映射
+python3 scripts/link-run-bundles.py                   # 把 runData 写进 catalog 条目
+npm run validate
+```
+
+`fetch-run-bundles.py` 把 `collect-runs.py` 送到主机上执行，所以论文身份仍按 `full-text.md` 的哈希归并，
+slug 也复用 `build-papers-page.py` 的 `SLUG_FIX`，不会和已发布链接对不上。18 篇共约 2.3MB。
+
+包里放什么、不放什么（两个脚本一致）：
+
+| 放 | 为什么 |
+| --- | --- |
+| `full-text.md`、`pages/page-*.md` | 模型实际读到的 OCR 文本，是复核报告结论的前提 |
+| `metadata.json`、`job.json`、`usage.json` | 抽取出的元数据、运行状态、token 账本 |
+| `report*.md`、`report*.layout.yaml`、`report*.typ` | 正文、排版 DSL、Typst 编译输入 |
+| `figure-analyses/` | 逐图分析结果 |
+
+| 不放 | 为什么 |
+| --- | --- |
+| `input/source.pdf` | 论文原文，第三方版权；包里记了 `source_url`，一键可取 |
+| `assets/`、`*-groups/*.png` | 从原文切出的图片，同上；且是 job 目录里的大头（16MB 中的 11MB） |
+
+因此一个包约 100–200KB 而不是 9MB。代价是不能"解压即重编译"——要重新渲染得取回原文重跑流水线，
+或者用 `report*.typ` 配自己的图片资源编译。这是拿"可检验"换"仓库不膨胀"。
+
 ## 其他托管选项
 
 - **Cloudflare Pages**：连接 GitHub 仓库；构建命令留空；输出目录填 `site`。

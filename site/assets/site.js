@@ -64,6 +64,7 @@
             <a class="resource-link" href="${escapeHtml(href)}">${escapeHtml(action || '打开')} <span aria-hidden="true">↗</span></a>
             ${pdf ? `<a class="resource-link resource-link-secondary" href="${escapeHtml(directPdf)}" download>下载</a>` : ''}
             ${pdf && sourceOf(item) ? `<a class="resource-link resource-link-secondary" href="${escapeHtml(sourceOf(item).url)}" rel="noopener" target="_blank">${escapeHtml(sourceOf(item).label)} ↗</a>` : ''}
+            ${item.runData ? `<a class="resource-link resource-link-secondary" href="${escapeHtml(joinBase(base, item.runData))}" download>运行数据</a>` : ''}
           </div>
         </div>
       </article>`;

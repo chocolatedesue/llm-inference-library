@@ -24,6 +24,19 @@ STAGING = Path(os.environ.get("PAPERS_PDFS", "/tmp/lil-pdfs"))
 DOWNLOADS = REPO / "site" / "downloads"
 CATALOG = REPO / "site" / "assets" / "catalog.js"
 PAGE = REPO / "site" / "content" / "papers" / "index.html"
+# Runs published by scripts/publish-run.py: not in the manifest, but their files
+# must survive regeneration and their count must show on the homepage.
+MANUAL_LIST = REPO / "scripts" / "manual-papers.txt"
+
+
+def manual_slugs():
+    if not MANUAL_LIST.exists():
+        return []
+    return [
+        line.strip()
+        for line in MANUAL_LIST.read_text().splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
 
 BUILD_DATE = subprocess.run(["date", "-u", "+%Y-%m-%d %H:%M UTC"], capture_output=True, text=True).stdout.strip()
 
@@ -139,6 +152,7 @@ def main():
             print("warning: cover generation failed; gallery will fall back to text cards")
 
     # ---- aggregates ------------------------------------------------------
+    manual = manual_slugs()
     n = len(clean)
     pages = sum(p["pages"] for p in clean)
     calls = sum(p["calls"] for p in clean)
@@ -415,6 +429,9 @@ paper-pipeline analyze \\
         tags = ", ".join(f"'{t}'" for t in (p.get("tags") or [])[:3])
         # 原文链接：抽到了就写进条目，页面缺失时回落到 catalog.js 的 PAPER_SOURCES。
         link = paper_link(p)
+        # 运行数据包（scripts/fetch-run-bundles.py 拉的）：在就挂上，不在就不提。
+        bundle = REPO / "site" / "downloads" / "runs" / f"{p['slug']}-run.zip"
+        run_data = f"\n    runData: 'downloads/runs/{p['slug']}-run.zip'," if bundle.exists() else ""
         source = (
             f"\n    source: {{ label: {json.dumps(link[0], ensure_ascii=False)}, "
             f"url: {json.dumps(link[1], ensure_ascii=False)} }},"
@@ -429,7 +446,7 @@ paper-pipeline analyze \\
     subtitle: {json.dumps(subtitle, ensure_ascii=False)},
     description: {json.dumps(desc, ensure_ascii=False)},
     tags: [{tags}],{source}
-    href: 'downloads/{p["slug"]}.pdf',
+    href: 'downloads/{p["slug"]}.pdf',{run_data}
     action: '在阅读器打开',
     updated: '{p["run_date"]}',
     accent: '{ACCENTS[i % len(ACCENTS)]}'
@@ -442,7 +459,7 @@ paper-pipeline analyze \\
     home_html = home.read_text()
     home_html = re.sub(
         r"<div><strong>\d+</strong><span>论文解构报告</span></div>",
-        f"<div><strong>{n}</strong><span>论文解构报告</span></div>",
+        f"<div><strong>{n + len(manual)}</strong><span>论文解构报告</span></div>",
         home_html,
     )
     home.write_text(home_html)
@@ -459,19 +476,21 @@ paper-pipeline analyze \\
     CATALOG.write_text(cat)
 
     # Drop PDFs / covers for papers that are no longer listed.
-    keep = {f"{p['slug']}.pdf" for p in clean}
+    keep = {f"{p['slug']}.pdf" for p in clean} | {f"{s}.pdf" for s in manual}
     for f in DOWNLOADS.glob("*.pdf"):
         if f.name not in keep:
             f.unlink()
             print(f"removed orphan {f.name}")
     covers = REPO / "site" / "assets" / "covers"
     if covers.exists():
-        keep_covers = {f"{p['slug']}.jpg" for p in clean}
+        keep_covers = {f"{p['slug']}.jpg" for p in clean} | {f"{s}.jpg" for s in manual}
         for f in covers.glob("*.jpg"):
             if f.name not in keep_covers:
                 f.unlink()
                 print(f"removed orphan cover {f.name}")
 
+    if manual:
+        print(f"manual runs kept: {', '.join(manual)}")
     print(f"papers={n} pages={pages} calls={calls} avg_hit={avg_hit}% stale={len(stale)} degraded={len(degraded)}")
     print(f"latest run {latest_run}, built {BUILD_DATE}")
 

@@ -1,0 +1,4 @@
+# 手工发布的运行（scripts/publish-run.py 维护）。
+# build-papers-page.py 读这份清单：这些 slug 的 PDF/封面不会被当成孤儿删掉，
+# 首页的报告篇数也会把它们算进去。
+aegaeon
