@@ -14,6 +14,9 @@
 
   const isPdf = (item) => typeof item.href === 'string' && /\.pdf$/i.test(item.href);
 
+  const sources = window.PAPER_SOURCES || {};
+  const sourceOf = (item) => item.source || sources[item.id] || null;
+
   const joinBase = (base, path) => {
     if (!path) return path;
     if (/^(?:[a-z]+:)?\/\//i.test(path) || path.startsWith('/')) return path;
@@ -60,6 +63,7 @@
           <div class="card-actions">
             <a class="resource-link" href="${escapeHtml(href)}">${escapeHtml(action || '打开')} <span aria-hidden="true">↗</span></a>
             ${pdf ? `<a class="resource-link resource-link-secondary" href="${escapeHtml(directPdf)}" download>下载</a>` : ''}
+            ${pdf && sourceOf(item) ? `<a class="resource-link resource-link-secondary" href="${escapeHtml(sourceOf(item).url)}" rel="noopener" target="_blank">${escapeHtml(sourceOf(item).label)} ↗</a>` : ''}
           </div>
         </div>
       </article>`;

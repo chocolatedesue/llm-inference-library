@@ -413,6 +413,13 @@ paper-pipeline analyze \\
         abstract = p.get("abstract_cn") or ""
         desc = (abstract[:118] + "…") if len(abstract) > 118 else abstract
         tags = ", ".join(f"'{t}'" for t in (p.get("tags") or [])[:3])
+        # 原文链接：抽到了就写进条目，页面缺失时回落到 catalog.js 的 PAPER_SOURCES。
+        link = paper_link(p)
+        source = (
+            f"\n    source: {{ label: {json.dumps(link[0], ensure_ascii=False)}, "
+            f"url: {json.dumps(link[1], ensure_ascii=False)} }},"
+            if link else ""
+        )
         entries.append(
             f"""  {{
     id: '{p["slug"]}',
@@ -421,7 +428,7 @@ paper-pipeline analyze \\
     title: {json.dumps(p["title"], ensure_ascii=False)},
     subtitle: {json.dumps(subtitle, ensure_ascii=False)},
     description: {json.dumps(desc, ensure_ascii=False)},
-    tags: [{tags}],
+    tags: [{tags}],{source}
     href: 'downloads/{p["slug"]}.pdf',
     action: '在阅读器打开',
     updated: '{p["run_date"]}',

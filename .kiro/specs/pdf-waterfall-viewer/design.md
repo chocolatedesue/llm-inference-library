@@ -68,6 +68,18 @@ Windows/Linux 的 Chrome/Edge 有这个 API，代码在进全屏时申请 `lock(
 因为常态下它的高度是 `calc(100vh - 67px)`（减站头），全屏时站头不存在。
 用原生 Fullscreen API 而不是 EmbedPDF 的 fullscreen 插件：后者只能全屏它自己的容器，且不在默认工具条上。
 
+### D4d 侧栏宽度是 CSS 变量，收起不摘元素
+`grid-template-columns: var(--nav-w, 290px) 6px minmax(0,1fr)`，拖动只改 `--nav-w`，
+不触碰 DOM 结构。收起状态把该列压到 0 并让 `aside` 保持占位（`visibility:hidden` + 宽度归零）——
+用 `display:none` 会把它从 grid 里摘掉，`资源列 → 阅读列` 整体左移一格，实测阅读区只剩 6px。
+宽度与收起状态写 `localStorage`，读取包在 try 里（隐私模式下 `localStorage` 可能抛）。
+
+### D4e 原文链接：条目优先，覆盖表兜底
+`links` 由模型从 OCR 文本里抽，18 篇只成功 7 篇，所以不能只依赖生成数据。
+解析顺序是"条目的 `source` → `window.PAPER_SOURCES[id]`"，后者手工维护、放在生成块之外。
+上游若要根治，应让流水线在收到 `--url` 时**确定性地**把该 URL 记为 `links.source`，
+而不是让模型从 OCR 里认——那是 `/Users/ccds/work/paper-pipeline` 的改动，不在本仓库范围内。
+
 ### D5 页码状态单向流动
 `?paper=<slug>` 是唯一的选中态来源：点击 → `pushState` → 渲染；`popstate` → 按 URL 重新选中。
 不做"渲染再回写状态"的反向链路，避免互相触发。

@@ -10,6 +10,10 @@ let SpreadMode = null; // 由动态 import 填充：默认双栏
 
 const items = window.CONTENT_ITEMS || [];
 const groupDefs = window.PAPER_GROUPS || [];
+const sourceMap = window.PAPER_SOURCES || {};
+
+// 原文链接：条目自带的优先（来自流水线抽取），否则用手工覆盖表。
+const sourceOf = (item) => item.source || sourceMap[item.id] || null;
 
 const el = {
   tree: document.querySelector('#navTree'),
@@ -18,11 +22,14 @@ const el = {
   nav: document.querySelector('#readerNav'),
   title: document.querySelector('#docTitle'),
   meta: document.querySelector('#docMeta'),
+  source: document.querySelector('#sourceLink'),
   download: document.querySelector('#downloadLink'),
   openTab: document.querySelector('#openTab'),
   shell: document.querySelector('#readerShell'),
   fullscreen: document.querySelector('#fullscreenBtn'),
   closeTab: document.querySelector('#closeTabBtn'),
+  navCollapse: document.querySelector('#navCollapseBtn'),
+  resizer: document.querySelector('#navResizer'),
   prev: document.querySelector('#prevPaper'),
   next: document.querySelector('#nextPaper'),
   empty: document.querySelector('#readerEmpty'),
@@ -176,6 +183,22 @@ const showInViewer = async (item) => {
   mode = 'embedpdf';
 };
 
+// 阅读区尺寸变化后重新请求 FitPage：EmbedPDF 的比例是按当时的容器算的。
+let refitTimer = 0;
+const refitCurrent = () => {
+  if (mode !== 'embedpdf' || !currentId || !ZoomMode) return;
+  window.clearTimeout(refitTimer);
+  refitTimer = window.setTimeout(async () => {
+    try {
+      const viewer = await viewerPromise;
+      const registry = await viewer.registry;
+      registry?.getPlugin('zoom')?.provides()?.forDocument?.(currentId)?.requestZoom?.(ZoomMode.FitPage);
+    } catch (error) {
+      console.error(error);
+    }
+  }, 140);
+};
+
 // ---- 选择与路由 --------------------------------------------------------
 const select = async (id, { push = false, replace = false } = {}) => {
   const item = byId.get(id);
@@ -183,7 +206,13 @@ const select = async (id, { push = false, replace = false } = {}) => {
   currentId = id;
 
   el.title.textContent = item.title || id;
-  el.meta.textContent = [item.subtitle, ...(item.tags || []).slice(0, 2)].filter(Boolean).join(' · ');
+  el.meta.textContent = [item.subtitle, item.venue, ...(item.tags || []).slice(0, 2)].filter(Boolean).join(' · ');
+  const source = sourceOf(item);
+  el.source.hidden = !source;
+  if (source) {
+    el.source.href = source.url;
+    el.source.textContent = `${source.label} ↗`;
+  }
   el.download.href = item.href;
   el.download.setAttribute('download', item.href.split('/').pop());
   el.openTab.href = item.href;
@@ -264,6 +293,7 @@ const closeActiveTab = async () => {
   el.empty.hidden = false;
   el.title.textContent = '选择左侧任意一篇开始阅读';
   el.meta.textContent = `${flat.length} 篇解构报告 · ${grouped.length} 个主题`;
+  el.source.hidden = true;
   document.title = '论文阅读器 · LLM 推理资料库';
   markActive(null);
   const url = new URL(window.location.href);
@@ -313,6 +343,71 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 el.search.addEventListener('input', applyFilter);
+
+// ---- 侧栏：收起/展开 + 拖宽 ------------------------------------------------
+const NAV_WIDTH_KEY = 'reader.navWidth';
+const NAV_COLLAPSED_KEY = 'reader.navCollapsed';
+const NAV_MIN = 200;
+const NAV_MAX = 520;
+
+const setNavWidth = (px) => {
+  const width = Math.max(NAV_MIN, Math.min(NAV_MAX, Math.round(px)));
+  el.shell.style.setProperty('--nav-w', `${width}px`);
+  try { localStorage.setItem(NAV_WIDTH_KEY, String(width)); } catch (error) { /* 隐私模式忽略 */ }
+  return width;
+};
+
+const setNavCollapsed = (collapsed) => {
+  el.shell.classList.toggle('is-nav-collapsed', collapsed);
+  el.navCollapse.setAttribute('aria-expanded', String(!collapsed));
+  el.navCollapse.textContent = collapsed ? '⇥ 目录' : '⇤ 目录';
+  try { localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (error) { /* 同上 */ }
+  refitCurrent();
+};
+
+el.navCollapse.addEventListener('click', () => {
+  setNavCollapsed(!el.shell.classList.contains('is-nav-collapsed'));
+});
+
+let dragging = false;
+el.resizer.addEventListener('pointerdown', (event) => {
+  dragging = true;
+  el.resizer.setPointerCapture(event.pointerId);
+  el.shell.classList.add('is-resizing');
+});
+el.resizer.addEventListener('pointermove', (event) => {
+  if (!dragging) return;
+  if (el.shell.classList.contains('is-nav-collapsed')) setNavCollapsed(false);
+  setNavWidth(event.clientX - el.shell.getBoundingClientRect().left);
+});
+const endDrag = (event) => {
+  if (!dragging) return;
+  dragging = false;
+  el.resizer.releasePointerCapture?.(event.pointerId);
+  el.shell.classList.remove('is-resizing');
+  refitCurrent();
+};
+el.resizer.addEventListener('pointerup', endDrag);
+el.resizer.addEventListener('pointercancel', endDrag);
+el.resizer.addEventListener('keydown', (event) => {
+  const step = event.shiftKey ? 48 : 16;
+  if (event.key === 'ArrowLeft') setNavWidth(el.nav.getBoundingClientRect().width - step);
+  else if (event.key === 'ArrowRight') setNavWidth(el.nav.getBoundingClientRect().width + step);
+  else return;
+  event.preventDefault();
+  refitCurrent();
+});
+
+try {
+  const savedWidth = Number(localStorage.getItem(NAV_WIDTH_KEY));
+  if (savedWidth) setNavWidth(savedWidth);
+  setNavCollapsed(localStorage.getItem(NAV_COLLAPSED_KEY) === '1');
+} catch (error) {
+  setNavCollapsed(false);
+}
+
+// 阅读区宽度变了就重新按整页适配，否则 FitPage 的比例是照旧宽度算的。
+window.addEventListener('resize', () => refitCurrent());
 el.prev.addEventListener('click', () => step(-1));
 el.next.addEventListener('click', () => step(1));
 el.navToggle.addEventListener('click', () => {

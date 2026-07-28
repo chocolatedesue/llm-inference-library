@@ -19,6 +19,10 @@
 - [x] 11. 修 `[hidden]` 被类选择器 `display` 覆盖导致的布局崩坏（空状态与降级区各占一屏）
 - [x] 12. 文档：README 重写「PDF 封面瀑布流与站内阅读器」；本 spec 三份同步到 EmbedPDF 方案
 
+- [x] 13. 侧栏可拖宽（`--nav-w` + `localStorage`，方向键可微调）与一键收起；修 `display:none` 导致列左移的 bug
+- [x] 14. 元数据：阅读器与卡片显示 arXiv/DOI/原文链接；`build-papers-page.py` 输出 `source`，
+  `catalog.js` 的 `window.PAPER_SOURCES` 作为手工覆盖表（已补齐现有 7 条）
+
 ## 未做 / 待定
 
 - [ ] A. 台账表格里的裸 PDF 链接是否也改走阅读器？（现在仍直链 `../../downloads/<slug>.pdf`）
@@ -27,6 +31,8 @@
 - [ ] D. 侧栏是否加键盘快捷键（j/k 或 `[`/`]` 翻篇）
 - [ ] G. 在 **Windows** 的 Chrome/Edge 上确认全屏 + Keyboard Lock 下 `Ctrl+W` 是否真被接走（macOS 已确认无此 API，不可能）
 - [ ] E. 新论文进站后是否要求必须登记分组（把 validate 的警告升级为失败）
+- [ ] H. 上游 `paper-pipeline`：收到 `--url` 时确定性地写入 `links.source`，减少手工补链接（另一个仓库，需单独确认）
+- [ ] I. 手工补齐其余 11 篇的 arXiv/DOI（`PAPER_SOURCES` 里已留注释示例）
 - [ ] F. 提交与推送到 `chocolatedesue/llm-inference-library`（**需用户确认**）
 
 ## 回归清单（改动阅读器后跑一遍）

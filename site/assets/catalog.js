@@ -387,3 +387,20 @@ window.PAPER_GROUPS = [
     ]
   }
 ];
+
+/*
+ * 论文原文链接。流水线只在 OCR 抽到 links 时才带上（18 篇里目前只有 7 篇），
+ * 所以这里作为可手工补充的覆盖表，放在生成块之外：build-papers-page.py 重写论文条目不会动它。
+ * 条目里带了 source 时优先用条目的，缺失才回落到这张表。
+ */
+window.PAPER_SOURCES = {
+  'attention-all-you-need': { label: 'arXiv:1706.03762', url: 'https://arxiv.org/abs/1706.03762' },
+  'tally': { label: 'arXiv:2410.07381', url: 'https://arxiv.org/abs/2410.07381' },
+  'flexpipe': { label: 'DOI', url: 'https://doi.org/10.1145/3767295.3769316' },
+  'gpemu': { label: 'DOI', url: 'https://doi.org/10.14778/3725688.3725716' },
+  'prefill-decode-multiplexing': { label: 'DOI', url: 'https://doi.org/10.1145/3779212.3790236' },
+  'understanding-diffusion-model-serving-production': { label: 'DOI', url: 'https://doi.org/10.1145/3772052.3772206' },
+  'simai': { label: '原文', url: 'https://www.usenix.org/system/files/nsdi25-wang-xizheng-simai.pdf' },
+  // 下列论文流水线没抽到链接，按需手工补：
+  // 'image-worth-16x16-words': { label: 'arXiv:2010.11929', url: 'https://arxiv.org/abs/2010.11929' },
+};

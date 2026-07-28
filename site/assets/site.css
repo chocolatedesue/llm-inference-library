@@ -64,7 +64,15 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 
 /* ---- in-site PDF reader (EmbedPDF) ---- */
 .reader-body { min-height:100vh; background:var(--paper); }
-.reader-shell { display:grid; grid-template-columns:290px minmax(0, 1fr); height:100vh; }
+.reader-shell { display:grid; grid-template-columns:var(--nav-w, 290px) 6px minmax(0, 1fr); height:100vh; }
+.reader-shell.is-nav-collapsed { grid-template-columns:0 6px minmax(0, 1fr); }
+/* 收起时不能 display:none —— 那会把 aside 从 grid 里摘掉，后面的列整体左移一格，
+   阅读区就只剩 6px。保留它占位，只是宽度归零。 */
+.reader-shell.is-nav-collapsed .reader-nav { padding:0; overflow:hidden; border-right:0; visibility:hidden; }
+.reader-resizer { position:relative; cursor:col-resize; background:#fff; border-right:1px solid var(--line); }
+.reader-resizer::after { position:absolute; inset:0 -3px; content:""; }
+.reader-resizer:hover, .reader-resizer:focus-visible { background:rgba(50,101,214,.18); outline:0; }
+.reader-shell.is-resizing { cursor:col-resize; user-select:none; }
 .reader-nav-toggle { display:none; }
 .reader-back { display:block; padding:2px 8px 0; color:var(--muted); font-size:12.5px; text-decoration:none; font-weight:640; }
 .reader-back:hover { color:var(--blue); }
@@ -91,6 +99,8 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 .reader-meta { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
 .reader-meta strong { font-size:14.5px; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .reader-meta span { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.reader-source { align-self:flex-start; margin-top:1px; color:var(--blue); font-size:12px; font-weight:640; text-decoration:none; }
+.reader-source:hover { text-decoration:underline; }
 .reader-actions { display:flex; flex:0 0 auto; flex-wrap:nowrap; gap:8px; align-items:center; }
 .reader-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); font:inherit; font-size:12.5px; font-weight:650; text-decoration:none; cursor:pointer; white-space:nowrap; }
 .reader-btn:hover { border-color:#b9c5d8; background:#f8fafc; }
@@ -111,6 +121,8 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 @media (max-width:900px) {
   .reader-shell { display:block; height:auto; }
   .reader-nav-toggle { display:inline-flex; align-items:center; gap:6px; margin:12px 16px 0; padding:8px 12px; border:1px solid var(--line); border-radius:9px; background:#fff; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+  .reader-resizer { display:none; }
+  .reader-shell.is-nav-collapsed { grid-template-columns:1fr; }
   .reader-nav { display:none; max-height:56vh; border-right:0; border-bottom:1px solid var(--line); }
   .reader-nav.is-open { display:flex; }
   .reader-bar { flex-direction:column; align-items:flex-start; }

@@ -23,15 +23,20 @@
       <p class="reader-nav-foot"><a href="content/papers/index.html">查看运行账本 →</a></p>
     </aside>
 
+    <div class="reader-resizer" id="navResizer" role="separator" aria-orientation="vertical"
+         tabindex="0" aria-label="调整目录宽度（左右方向键微调）"></div>
+
     <main class="reader-main" id="readerMain">
       <div class="reader-bar">
         <div class="reader-meta">
           <strong id="docTitle">选择左侧任意一篇开始阅读</strong>
           <span id="docMeta">18 篇解构报告 · 按主题分组</span>
+          <a class="reader-source" id="sourceLink" href="#" target="_blank" rel="noopener" hidden>原文 ↗</a>
         </div>
         <div class="reader-actions">
           <button class="reader-btn" id="prevPaper" type="button" title="上一篇">‹ 上一篇</button>
           <button class="reader-btn" id="nextPaper" type="button" title="下一篇">下一篇 ›</button>
+          <button class="reader-btn" id="navCollapseBtn" type="button" aria-expanded="true" aria-controls="readerNav" title="收起/展开目录">⇤ 目录</button>
           <button class="reader-btn" id="closeTabBtn" type="button" title="关闭当前标签（Alt/⌥+W）">关闭标签</button>
           <button class="reader-btn" id="fullscreenBtn" type="button" aria-pressed="false">全屏</button>
           <a class="reader-btn" id="openTab" href="#" target="_blank" rel="noopener">新标签打开</a>
