@@ -8,7 +8,7 @@
 - [x] 4. EmbedPDF 接入：jsdelivr `@embedpdf/snippet@2.14.4`，首次选中才动态 import，FitPage，关闭 Google Fonts / 图章库
 - [x] 5. 多标签：点开一篇多开一个 tab（`name` 取论文短标题），已开过的走 `setActiveDocument` 不重复开
 - [x] 5b. 默认双栏 `SpreadMode.Odd` + 「全屏」按钮（Fullscreen API 作用于 `#readerShell`）
-- [x] 5c. 排版就绪后重新 `requestZoom(FitPage)`，修双栏下跨页超出视口
+- [x] 5c. 排版就绪 / 侧栏或窗口尺寸变化后重新 `requestZoom(FitWidth)`（init 时的比例是按单页算的）
 - [x] 5d. 关闭当前内部标签：「关闭标签」按钮 + `Alt+W`（`Ctrl/⌘+W` 绑同一动作，受平台/浏览器保留键限制）
 - [x] 5e. 阅读页移除站头，shell 吃满 `100vh`，返回链接移到侧栏顶部
 - [x] 6. 降级路径：import/init 失败 → 浏览器自带阅读器 iframe
@@ -43,7 +43,7 @@ npm start   # 然后：
 # 1. /reader.html?paper=attention-all-you-need 直接可读
 # 2. 点侧栏另一篇 → 多一个标签、URL 变、后退回到上一篇；再点已开的那篇不重复开
 # 2b. 点「全屏」→ 整块（含目录）全屏、无留白；再点退出
-# 2c. 首屏是双栏（并排两页）且整页可见，不被裁
+# 2c. 首屏是双栏（并排两页）且横向铺满阅读区
 # 2d. Alt+W 关当前标签 → 切到相邻标签；关到最后一个 → 回空态、URL 去掉 ?paper=
 # 3. 侧栏筛选框输入关键词 → 命中为空的组隐藏
 # 4. 首页「论文解构」→ 卡片「在阅读器打开」/「下载」都对

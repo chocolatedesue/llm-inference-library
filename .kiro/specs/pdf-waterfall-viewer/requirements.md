@@ -27,7 +27,7 @@
 - `reader.html?paper=<slug>` **应当**是可分享、刷新后仍定位到同一篇的稳定 URL。
 
 ### R2b 版式、全屏与关闭标签
-- 默认**应当**双栏（跨页）显示，并且整页在视口内可见（fit page），不被裁切。
+- 默认**应当**双栏（跨页）显示，并按宽度适配（fit width），跨页横向铺满阅读区。
 - **应当**提供全屏；全屏状态下仍能通过左侧目录换论文。
 - **应当**能关闭当前内部标签（按钮 + 快捷键），且关闭语义是"关标签"而不是"关浏览器页"；
   `Ctrl+W` 在平台允许的前提下（Windows/Linux Chrome 全屏）也走同一动作。
@@ -68,7 +68,7 @@
 | 多标签 | 开两篇 → 两个标签（`GPEmu`、`Torch.fx`）；再点已开的那篇 → 标签数不变，直接切过去 |
 | 双栏 | 首屏并排显示第 1、2 页 |
 | 全屏 | 点「全屏」→ `document.fullscreenElement === #readerShell`，shell 高度等于 `innerHeight`，按钮变「退出全屏」 |
-| fit page | 页高 503px ≤ 阅读区 572px，整页可见 |
+| fit width | 跨页宽 963px ≈ 阅读区 984px，缩放 80%，页面 477×675 |
 | Alt+W / 「关闭标签」按钮 | 两标签下关当前 → 切到另一篇（URL/标题/高亮同步）；再关 → 空态、URL 无 `?paper=`、按钮 disabled |
 | `navigator.keyboard`（macOS Chromium） | 无头与 headed 均为 `false` → `⌘+W` 无法拦截，已改用按钮 + `Alt+W` |
 | 去站头 | 无 `.site-header`，shell 从 y=0 起吃满 639px，阅读区从 505px 涨到 572px |

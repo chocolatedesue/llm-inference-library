@@ -41,12 +41,16 @@ init 时仍不传 `src`：否则会先冒出一个我们无法按 slug 引用的
 代价：EmbedPDF 内部切标签时我们的侧栏高亮与 URL 不会跟着变（状态是单向的，见 D5）。
 接受这个不对称——URL 反映的是"最后从目录点开的那篇"。
 
-### D4 初始缩放 FitPage + 默认双栏 SpreadMode.Odd
-这些解构报告上边距很大。FitWidth（实测 161%）首屏全是空白，要滚一屏才见标题；
-FitPage 打开即见完整首页。双栏用 `Odd`（第 1 页在跨页左侧）而不是 `Even`：报告首页是正文标题页，不是书籍封面。
+### D4 初始缩放 FitWidth + 默认双栏 SpreadMode.Odd
+双栏用 `Odd`（第 1 页在跨页左侧）而不是 `Even`：报告首页是正文标题页，不是书籍封面。
 
-只在 init 里写 `defaultZoomLevel` 不够：那次计算发生在双栏排版生效之前，按单页宽度算出的比例会让跨页超出视口。
-因此订阅 `scroll.onLayoutReady`，每份文档排版就绪后再 `zoom.forDocument(id).requestZoom(FitPage)` 一次。
+缩放默认几经反复，最后定在 **FitWidth**（按用户要求）。三种口径的实测对比（984×549 的阅读区、双栏）：
+`FitPage` 页面 355×503、跨页只占约 710px，横向留白多、字小；`FitWidth` 页面 477×675、跨页占 963px、80%，
+字大但页面高于视口，首屏会先看到报告的大上边距。取舍是"字大优先"。
+
+只在 init 里写 `defaultZoomLevel` 不够：那次计算发生在双栏排版生效之前，是按单页宽度算的。
+因此订阅 `scroll.onLayoutReady`，每份文档排版就绪后再 `zoom.forDocument(id).requestZoom(FitWidth)` 一次；
+侧栏拖宽/收起、窗口 resize 之后也重新请求（`refitCurrent`，带 140ms 防抖）。
 
 ### D4c 关闭内部标签：Alt+W 为主，Ctrl/⌘+W 尽力而为
 `Ctrl/⌘+W` 是浏览器保留键，网页默认拿不到——除非在全屏下用 Keyboard Lock

@@ -73,9 +73,11 @@ npm start
   且只在**第一次点开某篇论文时才动态 import**——只逛首页的访客不付这份流量。
 - `fonts: { ui: null, signature: null }` 与 `stamp: { manifests: [] }`：把第三方来源收敛到 jsdelivr 一个，
   不再请求 Google Fonts。
-- 初始缩放 `ZoomMode.FitPage` + 默认双栏 `SpreadMode.Odd`（第 1 页排在跨页左侧，报告首页就是正文而非书籍封面）。
-  这些报告上边距很大，FitWidth 会让首屏全是空白。双栏是排版完成后才生效的，所以还订阅了
-  `scroll.onLayoutReady`，每份文档就绪后再 `requestZoom(FitPage)` 一次——否则 init 时按单页算出的比例会让跨页超出视口。
+- 初始缩放 `ZoomMode.FitWidth` + 默认双栏 `SpreadMode.Odd`（第 1 页排在跨页左侧，报告首页就是正文而非书籍封面）。
+  双栏下 FitWidth 是让整个跨页横向铺满：实测 984px 宽的阅读区里跨页占 963px、页面 477×675（FitPage 时只有 355×503）。
+  代价是这些报告上边距很大，首屏会先看到一段空白，标题在下面一点。
+  双栏是排版完成后才生效的，所以还订阅了 `scroll.onLayoutReady`，每份文档就绪后再 `requestZoom(FitWidth)` 一次；
+  侧栏拖宽/收起与窗口缩放之后也会重新请求一次，否则比例还是按旧宽度算的。
 - **关闭内部标签**：工具条的「关闭标签」按钮，或 `Alt+W`（macOS 上即 `⌥W`；判定走 `event.code === 'KeyW'`，因为 `⌥W` 的 `event.key` 是 `∑`）。关掉后切到相邻标签；关掉最后一个则回空态并清掉 URL 上的 `?paper=`。
   `Ctrl/⌘+W` 绑了同一个动作，但**页面能不能拿到它取决于平台**：
   - Windows / Linux 的 Chrome / Edge：进全屏后代码会申请 Keyboard Lock（`navigator.keyboard.lock(['KeyW'])`），

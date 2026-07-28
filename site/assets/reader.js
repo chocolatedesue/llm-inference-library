@@ -135,14 +135,14 @@ const startViewer = async () => {
     // 只留 jsdelivr 一个第三方来源：不额外拉 Google Fonts 与默认图章库。
     fonts: { ui: null, signature: null },
     stamp: { manifests: [] },
-    // FitWidth 会把这些报告的大上边距顶满首屏（点开像是空白页），FitPage 一进来就见内容。
-    zoom: ZoomMode ? { defaultZoomLevel: ZoomMode.FitPage } : undefined,
+    // 默认适合宽度：双栏下是让整个跨页横向铺满，页面比 FitPage 大一截。
+    zoom: ZoomMode ? { defaultZoomLevel: ZoomMode.FitWidth } : undefined,
     // 默认双栏：Odd 表示第 1 页排在跨页左侧（报告首页就是正文而非书籍封面）。
     spread: SpreadMode ? { defaultSpreadMode: SpreadMode.Odd } : undefined
   });
 
-  // 双栏是在文档排版完成后才生效的，init 时的 defaultZoomLevel 按单页算过一次，
-  // 结果是跨页被裁掉右半边。每份文档排版就绪后再显式请求一次 FitPage。
+  // 双栏是在文档排版完成后才生效的，init 时的 defaultZoomLevel 按单页算过一次。
+  // 每份文档排版就绪后再显式请求一次 FitWidth，让比例按跨页宽度重算。
   try {
     const registry = await viewer.registry;
     const scroll = registry?.getPlugin('scroll')?.provides();
@@ -150,7 +150,7 @@ const startViewer = async () => {
     if (scroll && zoom && ZoomMode && typeof scroll.onLayoutReady === 'function') {
       scroll.onLayoutReady((event) => {
         if (!event || event.isInitial === false) return;
-        zoom.forDocument?.(event.documentId)?.requestZoom?.(ZoomMode.FitPage);
+        zoom.forDocument?.(event.documentId)?.requestZoom?.(ZoomMode.FitWidth);
       });
     }
   } catch (error) {
@@ -183,7 +183,7 @@ const showInViewer = async (item) => {
   mode = 'embedpdf';
 };
 
-// 阅读区尺寸变化后重新请求 FitPage：EmbedPDF 的比例是按当时的容器算的。
+// 阅读区尺寸变化后重新请求 FitWidth：EmbedPDF 的比例是按当时的容器算的。
 let refitTimer = 0;
 const refitCurrent = () => {
   if (mode !== 'embedpdf' || !currentId || !ZoomMode) return;
@@ -192,7 +192,7 @@ const refitCurrent = () => {
     try {
       const viewer = await viewerPromise;
       const registry = await viewer.registry;
-      registry?.getPlugin('zoom')?.provides()?.forDocument?.(currentId)?.requestZoom?.(ZoomMode.FitPage);
+      registry?.getPlugin('zoom')?.provides()?.forDocument?.(currentId)?.requestZoom?.(ZoomMode.FitWidth);
     } catch (error) {
       console.error(error);
     }
@@ -406,7 +406,7 @@ try {
   setNavCollapsed(false);
 }
 
-// 阅读区宽度变了就重新按整页适配，否则 FitPage 的比例是照旧宽度算的。
+// 阅读区宽度变了就重新按宽度适配，否则比例还是照旧宽度算的。
 window.addEventListener('resize', () => refitCurrent());
 el.prev.addEventListener('click', () => step(-1));
 el.next.addEventListener('click', () => step(1));
