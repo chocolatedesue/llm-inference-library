@@ -9,27 +9,30 @@
 </head>
 <body class="reader-body">
   <div class="reader-shell" id="readerShell">
-    <button class="reader-nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="readerNav">
-      目录 <span aria-hidden="true">▾</span>
-    </button>
-
     <aside class="reader-nav" id="readerNav" aria-label="论文目录">
-      <a class="reader-back" href="./">← 返回资料库</a>
+      <div class="reader-nav-head">
+        <a class="reader-back" href="./">← 返回资料库</a>
+        <button class="reader-drawer-close" id="navCloseBtn" type="button" aria-label="收起目录">✕</button>
+      </div>
       <div class="reader-nav-search">
         <label class="sr-only" for="navSearch">筛选论文</label>
         <input id="navSearch" type="search" placeholder="筛选标题或标签" autocomplete="off">
       </div>
       <nav id="navTree" class="reader-tree"></nav>
       <p class="reader-nav-foot"><a href="content/papers/index.html">查看运行账本 →</a></p>
+      <div class="reader-resizer" id="navResizer" role="separator" aria-orientation="vertical"
+           tabindex="0" aria-label="调整目录宽度（左右方向键微调）"></div>
     </aside>
 
-    <div class="reader-resizer" id="navResizer" role="separator" aria-orientation="vertical"
-         tabindex="0" aria-label="调整目录宽度（左右方向键微调）"></div>
+    <div class="reader-scrim" id="navScrim" hidden></div>
 
     <main class="reader-main" id="readerMain">
       <div class="reader-bar">
+        <button class="reader-drawer-btn" id="navToggle" type="button" aria-expanded="false" aria-controls="readerNav" title="目录（D）">
+          <span aria-hidden="true">☰</span> 目录
+        </button>
         <div class="reader-meta">
-          <strong id="docTitle">选择左侧任意一篇开始阅读</strong>
+          <strong id="docTitle">从「目录」里选一篇开始阅读</strong>
           <span id="docMeta">18 篇解构报告 · 按主题分组</span>
           <span class="reader-meta-links">
             <a class="reader-source" id="sourceLink" href="#" target="_blank" rel="noopener" hidden>原文 ↗</a>
@@ -39,7 +42,6 @@
         <div class="reader-actions">
           <button class="reader-btn" id="prevPaper" type="button" title="上一篇">‹ 上一篇</button>
           <button class="reader-btn" id="nextPaper" type="button" title="下一篇">下一篇 ›</button>
-          <button class="reader-btn" id="navCollapseBtn" type="button" aria-expanded="true" aria-controls="readerNav" title="收起/展开目录">⇤ 目录</button>
           <button class="reader-btn" id="closeTabBtn" type="button" title="关闭当前标签（Alt/⌥+W）">关闭标签</button>
           <button class="reader-btn" id="fullscreenBtn" type="button" aria-pressed="false">全屏</button>
           <a class="reader-btn" id="openTab" href="#" target="_blank" rel="noopener">新标签打开</a>
@@ -49,8 +51,9 @@
 
       <div class="reader-stage">
         <div class="reader-empty" id="readerEmpty">
-          <p>左侧按主题分了 5 组，点任意一篇即在此处打开。</p>
+          <p>论文按主题分了 5 组，点左上角「目录」打开抽屉挑一篇。</p>
           <p class="reader-hint">阅读器为 <a href="https://github.com/embedpdf/embed-pdf-viewer" rel="noopener">EmbedPDF</a>（PDFium/WASM），默认双栏、适合宽度，支持文本选中、搜索、缩略图与打印。点开多篇会在阅读器内部多开标签。</p>
+          <p class="reader-hint">目录是抽屉：<kbd>D</kbd> 开合，<kbd>Esc</kbd> 收起，选中一篇后自动收起，所以阅读区始终是整屏宽。抽屉右边缘可拖宽。</p>
           <p class="reader-hint">关闭当前标签：「关闭标签」按钮，或 <kbd>Alt</kbd>/<kbd>⌥</kbd>+<kbd>W</kbd>。<kbd>Ctrl</kbd>+<kbd>W</kbd> 只在 <b>Windows/Linux 的 Chrome/Edge 全屏</b>下才归页面（Keyboard Lock）；macOS 的 <kbd>⌘</kbd>+<kbd>W</kbd> 与非全屏状态一律由浏览器接走，网页拦不住。</p>
           <p class="reader-hint">若加载失败会自动退回浏览器自带的 PDF 阅读器。</p>
         </div>

@@ -18,7 +18,6 @@ const sourceOf = (item) => item.source || sourceMap[item.id] || null;
 const el = {
   tree: document.querySelector('#navTree'),
   search: document.querySelector('#navSearch'),
-  navToggle: document.querySelector('#navToggle'),
   nav: document.querySelector('#readerNav'),
   title: document.querySelector('#docTitle'),
   meta: document.querySelector('#docMeta'),
@@ -29,7 +28,9 @@ const el = {
   shell: document.querySelector('#readerShell'),
   fullscreen: document.querySelector('#fullscreenBtn'),
   closeTab: document.querySelector('#closeTabBtn'),
-  navCollapse: document.querySelector('#navCollapseBtn'),
+  navToggle: document.querySelector('#navToggle'),
+  navClose: document.querySelector('#navCloseBtn'),
+  scrim: document.querySelector('#navScrim'),
   resizer: document.querySelector('#navResizer'),
   prev: document.querySelector('#prevPaper'),
   next: document.querySelector('#nextPaper'),
@@ -233,8 +234,8 @@ const select = async (id, { push = false, replace = false } = {}) => {
     if (push) window.history.pushState({ paper: id }, '', url);
     else window.history.replaceState({ paper: id }, '', url);
   }
-  el.nav.classList.remove('is-open');
-  el.navToggle.setAttribute('aria-expanded', 'false');
+  // 选完就收起：抽屉的意义是阅读时不占地方。
+  setDrawer(false, { focus: false });
 
   if (mode === 'fallback') {
     useFallback(item);
@@ -348,11 +349,12 @@ document.addEventListener('fullscreenchange', () => {
 
 el.search.addEventListener('input', applyFilter);
 
-// ---- 侧栏：收起/展开 + 拖宽 ------------------------------------------------
+// ---- 目录抽屉：开合 + 拖宽 --------------------------------------------
+// 抽屉覆盖在阅读区之上，不占列宽，所以开合不改变 PDF 的可用宽度。
 const NAV_WIDTH_KEY = 'reader.navWidth';
-const NAV_COLLAPSED_KEY = 'reader.navCollapsed';
-const NAV_MIN = 200;
+const NAV_MIN = 220;
 const NAV_MAX = 520;
+let lastFocus = null;
 
 const setNavWidth = (px) => {
   const width = Math.max(NAV_MIN, Math.min(NAV_MAX, Math.round(px)));
@@ -361,16 +363,38 @@ const setNavWidth = (px) => {
   return width;
 };
 
-const setNavCollapsed = (collapsed) => {
-  el.shell.classList.toggle('is-nav-collapsed', collapsed);
-  el.navCollapse.setAttribute('aria-expanded', String(!collapsed));
-  el.navCollapse.textContent = collapsed ? '⇥ 目录' : '⇤ 目录';
-  try { localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (error) { /* 同上 */ }
-  refitCurrent();
+const drawerOpen = () => el.shell.classList.contains('is-drawer-open');
+
+const setDrawer = (open, { focus = true } = {}) => {
+  el.shell.classList.toggle('is-drawer-open', open);
+  el.nav.setAttribute('aria-hidden', String(!open));
+  el.navToggle.setAttribute('aria-expanded', String(open));
+  el.scrim.hidden = !open;
+  if (open) {
+    lastFocus = document.activeElement;
+    if (focus) el.search.focus({ preventScroll: true });
+  } else if (focus) {
+    (lastFocus === el.search || !lastFocus ? el.navToggle : lastFocus).focus?.({ preventScroll: true });
+  }
 };
 
-el.navCollapse.addEventListener('click', () => {
-  setNavCollapsed(!el.shell.classList.contains('is-nav-collapsed'));
+el.navToggle.addEventListener('click', () => setDrawer(!drawerOpen()));
+el.navClose.addEventListener('click', () => setDrawer(false));
+el.scrim.addEventListener('click', () => setDrawer(false));
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && drawerOpen()) {
+    event.preventDefault();
+    setDrawer(false);
+    return;
+  }
+  // D 打开/收起抽屉，但别在输入框里抢键。
+  const typing = event.target instanceof HTMLElement
+    && (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable);
+  if (!typing && !event.ctrlKey && !event.metaKey && !event.altKey && (event.code === 'KeyD')) {
+    event.preventDefault();
+    setDrawer(!drawerOpen());
+  }
 });
 
 let dragging = false;
@@ -381,7 +405,6 @@ el.resizer.addEventListener('pointerdown', (event) => {
 });
 el.resizer.addEventListener('pointermove', (event) => {
   if (!dragging) return;
-  if (el.shell.classList.contains('is-nav-collapsed')) setNavCollapsed(false);
   setNavWidth(event.clientX - el.shell.getBoundingClientRect().left);
 });
 const endDrag = (event) => {
@@ -389,7 +412,6 @@ const endDrag = (event) => {
   dragging = false;
   el.resizer.releasePointerCapture?.(event.pointerId);
   el.shell.classList.remove('is-resizing');
-  refitCurrent();
 };
 el.resizer.addEventListener('pointerup', endDrag);
 el.resizer.addEventListener('pointercancel', endDrag);
@@ -399,25 +421,16 @@ el.resizer.addEventListener('keydown', (event) => {
   else if (event.key === 'ArrowRight') setNavWidth(el.nav.getBoundingClientRect().width + step);
   else return;
   event.preventDefault();
-  refitCurrent();
 });
 
 try {
   const savedWidth = Number(localStorage.getItem(NAV_WIDTH_KEY));
   if (savedWidth) setNavWidth(savedWidth);
-  setNavCollapsed(localStorage.getItem(NAV_COLLAPSED_KEY) === '1');
-} catch (error) {
-  setNavCollapsed(false);
-}
+} catch (error) { /* 同上 */ }
+setDrawer(false, { focus: false });
 
-// 阅读区宽度变了就重新按宽度适配，否则比例还是照旧宽度算的。
+// 窗口尺寸变了仍要重算 FitWidth（抽屉开合不需要，它不占宽度）。
 window.addEventListener('resize', () => refitCurrent());
-el.prev.addEventListener('click', () => step(-1));
-el.next.addEventListener('click', () => step(1));
-el.navToggle.addEventListener('click', () => {
-  const open = el.nav.classList.toggle('is-open');
-  el.navToggle.setAttribute('aria-expanded', String(open));
-});
 
 window.addEventListener('popstate', () => {
   const id = new URLSearchParams(window.location.search).get('paper');

@@ -63,20 +63,27 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 @media (max-width:720px) { .shell { width:min(100% - 32px, 1120px); }.header-note { display:none; }.hero { padding:58px 0 48px; }.intro { font-size:16px; }.stat-row div { min-width:calc(50% - 1px); }.stat-row div:nth-child(2) { border-right:0; }.stat-row div:last-child { border-top:1px solid var(--line); }.section-heading { align-items:start; flex-direction:column; }.search, .search input { width:100%; max-width:none; }.content-grid, .steps { grid-template-columns:1fr; }.content-grid.is-waterfall { column-count:1; }.resource-card { min-height:0; }.site-footer .shell { flex-direction:column; gap:3px; } }
 
 /* ---- in-site PDF reader (EmbedPDF) ---- */
-.reader-body { min-height:100vh; background:var(--paper); }
-.reader-shell { display:grid; grid-template-columns:var(--nav-w, 290px) 6px minmax(0, 1fr); height:100vh; }
-.reader-shell.is-nav-collapsed { grid-template-columns:0 6px minmax(0, 1fr); }
-/* 收起时不能 display:none —— 那会把 aside 从 grid 里摘掉，后面的列整体左移一格，
-   阅读区就只剩 6px。保留它占位，只是宽度归零。 */
-.reader-shell.is-nav-collapsed .reader-nav { padding:0; overflow:hidden; border-right:0; visibility:hidden; }
-.reader-resizer { position:relative; cursor:col-resize; background:#fff; border-right:1px solid var(--line); }
-.reader-resizer::after { position:absolute; inset:0 -3px; content:""; }
-.reader-resizer:hover, .reader-resizer:focus-visible { background:rgba(50,101,214,.18); outline:0; }
-.reader-shell.is-resizing { cursor:col-resize; user-select:none; }
-.reader-nav-toggle { display:none; }
-.reader-back { display:block; padding:2px 8px 0; color:var(--muted); font-size:12.5px; text-decoration:none; font-weight:640; }
+.reader-body { min-height:100vh; background:var(--paper); overflow:hidden; }
+/* 阅读区始终占满整屏：目录是覆盖在上面的抽屉，不参与列宽计算，
+   所以开合抽屉不会改变 PDF 的可用宽度，也就不用重算 FitWidth。 */
+.reader-shell { position:relative; height:100vh; }
+
+/* ---- 目录抽屉 ---- */
+.reader-nav { position:absolute; top:0; left:0; z-index:30; width:var(--nav-w, 300px); height:100%; display:flex; flex-direction:column; gap:10px; padding:14px 14px 20px; background:#fff; border-right:1px solid var(--line); box-shadow:6px 0 24px rgba(20,32,60,.10); overflow-y:auto; transform:translateX(-102%); transition:transform .22s cubic-bezier(.4,0,.2,1); }
+.reader-shell.is-drawer-open .reader-nav { transform:translateX(0); }
+/* 关着的时候要退出 tab 序列，否则焦点会跑进看不见的抽屉里。 */
+.reader-nav[aria-hidden="true"] { visibility:hidden; }
+.reader-shell.is-drawer-open .reader-nav[aria-hidden="true"] { visibility:visible; }
+.reader-scrim { position:absolute; inset:0; z-index:20; background:rgba(19,26,38,.34); opacity:0; transition:opacity .22s ease; }
+.reader-shell.is-drawer-open .reader-scrim { opacity:1; }
+.reader-nav-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.reader-back { color:var(--muted); font-size:12.5px; text-decoration:none; font-weight:640; }
 .reader-back:hover { color:var(--blue); }
-.reader-nav { display:flex; flex-direction:column; gap:10px; padding:14px 14px 20px; overflow-y:auto; border-right:1px solid var(--line); background:#fff; }
+.reader-drawer-close { width:26px; height:26px; display:grid; place-items:center; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); font:inherit; font-size:12px; cursor:pointer; }
+.reader-drawer-close:hover { border-color:#b9c5d8; color:var(--ink); }
+.reader-drawer-btn { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; padding:8px 12px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); font:inherit; font-size:13px; font-weight:660; cursor:pointer; }
+.reader-drawer-btn:hover { border-color:#b9c5d8; background:#f8fafc; }
+.reader-shell.is-drawer-open .reader-drawer-btn { border-color:var(--blue); color:var(--blue); }
 .reader-nav-search input { width:100%; padding:9px 12px; color:var(--ink); border:1px solid #cbd4e1; border-radius:9px; outline:0; background:#fff; font:inherit; font-size:14px; }
 .reader-nav-search input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(50,101,214,.16); }
 .reader-tree { display:flex; flex-direction:column; gap:4px; }
@@ -94,8 +101,14 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 .reader-item-sub { display:block; color:var(--muted); font-size:11.5px; }
 .reader-nav-foot { margin:auto 0 0; padding-top:10px; border-top:1px solid var(--line); font-size:12.5px; }
 .reader-nav-foot a { color:var(--blue); text-decoration:none; font-weight:640; }
-.reader-main { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; }
-.reader-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:58px; padding:10px 20px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.9); backdrop-filter:blur(12px); }
+/* 拖宽把手贴在抽屉右缘 */
+.reader-resizer { position:absolute; top:0; right:0; width:6px; height:100%; cursor:col-resize; background:transparent; }
+.reader-resizer:hover, .reader-resizer:focus-visible { background:rgba(50,101,214,.18); outline:0; }
+.reader-shell.is-resizing { cursor:col-resize; user-select:none; }
+
+/* ---- 阅读区 ---- */
+.reader-main { display:flex; flex-direction:column; min-width:0; min-height:0; height:100%; overflow:hidden; }
+.reader-bar { display:flex; align-items:center; gap:14px; min-height:58px; padding:10px 20px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.9); backdrop-filter:blur(12px); }
 .reader-meta { min-width:0; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
 .reader-meta strong { font-size:14.5px; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .reader-meta span { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -113,20 +126,20 @@ h2 { margin-bottom:14px; font-size:clamp(26px, 3vw, 37px); line-height:1.17; let
 .reader-viewport { height:100%; }
 .reader-empty:not([hidden]) { display:grid; place-content:center; gap:10px; height:100%; padding:32px; text-align:center; }
 .reader-empty p { margin:0; color:#4b5668; }
-.reader-hint { max-width:560px; color:var(--muted); font-size:13px; }
+.reader-hint { max-width:620px; margin-inline:auto; color:var(--muted); font-size:13px; }
 .reader-hint a { color:var(--blue); }
 .reader-hint kbd { padding:1px 5px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:#fff; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11.5px; }
 .reader-fallback:not([hidden]) { display:flex; flex-direction:column; height:100%; }
 .reader-fallback p { margin:0; padding:10px 16px; border-bottom:1px solid var(--line); background:#fff5f5; color:#9b2c2c; font-size:13px; }
 .reader-fallback iframe { flex:1; width:100%; border:0; background:#fff; }
 @media (max-width:900px) {
-  .reader-shell { display:block; height:auto; }
-  .reader-nav-toggle { display:inline-flex; align-items:center; gap:6px; margin:12px 16px 0; padding:8px 12px; border:1px solid var(--line); border-radius:9px; background:#fff; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+  .reader-nav { width:min(86vw, var(--nav-w, 300px)); }
   .reader-resizer { display:none; }
-  .reader-shell.is-nav-collapsed { grid-template-columns:1fr; }
-  .reader-nav { display:none; max-height:56vh; border-right:0; border-bottom:1px solid var(--line); }
-  .reader-nav.is-open { display:flex; }
-  .reader-bar { flex-direction:column; align-items:flex-start; }
+  .reader-bar { flex-wrap:wrap; }
   .reader-meta strong, .reader-meta span { white-space:normal; }
-  .reader-stage { height:76vh; }
+  .reader-actions { flex-wrap:wrap; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .reader-nav, .reader-scrim { transition:none; }
+}
 }

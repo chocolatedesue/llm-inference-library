@@ -72,11 +72,17 @@ Windows/Linux 的 Chrome/Edge 有这个 API，代码在进全屏时申请 `lock(
 因为常态下它的高度是 `calc(100vh - 67px)`（减站头），全屏时站头不存在。
 用原生 Fullscreen API 而不是 EmbedPDF 的 fullscreen 插件：后者只能全屏它自己的容器，且不在默认工具条上。
 
-### D4d 侧栏宽度是 CSS 变量，收起不摘元素
-`grid-template-columns: var(--nav-w, 290px) 6px minmax(0,1fr)`，拖动只改 `--nav-w`，
-不触碰 DOM 结构。收起状态把该列压到 0 并让 `aside` 保持占位（`visibility:hidden` + 宽度归零）——
-用 `display:none` 会把它从 grid 里摘掉，`资源列 → 阅读列` 整体左移一格，实测阅读区只剩 6px。
-宽度与收起状态写 `localStorage`，读取包在 try 里（隐私模式下 `localStorage` 可能抛）。
+### D4d 目录做成覆盖式抽屉，不再占列
+最初是两栏 grid（目录 + 阅读区）+ 收起把列压到 0。改成抽屉：`aside` 绝对定位、`translateX(-102%)` 藏在屏外，
+开合只切一个 class，阅读区永远是整屏宽。
+
+这样换来两件事：一是阅读区宽度不再随目录开合变化，`FitWidth` 不需要在开合时重算（只留 window resize 那条路径），
+少一个会抖的耦合；二是同一套交互在窄屏与宽屏一致，不用再维护 900px 以下的另一种布局。
+代价是打开时目录盖住一部分正文——对"挑一篇然后读"的动线可以接受，何况选中后自动收起。
+
+细节：关着时给 `aside` 加 `aria-hidden="true"` + `visibility:hidden`，否则 Tab 会走进屏幕外的抽屉；
+`Esc` 与遮罩点击都收起；`D` 键开合但在输入框里不抢键（判 `event.target` 是否 input/textarea/contenteditable）。
+宽度仍写 `localStorage`（读写包在 try 里，隐私模式会抛）；开合状态**不**持久化——每次进来都是整屏阅读。
 
 ### D4e 原文链接：条目优先，覆盖表兜底
 `links` 由模型从 OCR 文本里抽，18 篇只成功 7 篇，所以不能只依赖生成数据。
