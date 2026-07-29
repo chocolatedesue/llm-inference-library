@@ -197,6 +197,24 @@ slug 也复用 `build-papers-page.py` 的 `SLUG_FIX`，不会和已发布链接�
 因此一个包约 100–200KB 而不是 9MB。代价是不能"解压即重编译"——要重新渲染得取回原文重跑流水线，
 或者用 `report*.typ` 配自己的图片资源编译。这是拿"可检验"换"仓库不膨胀"。
 
+## 渲染产物已经在本机时（只发布，不重渲染）
+
+排版阶段跑过一轮、19 篇的 `report.compact.pdf` 已经在本机 job 目录里时，站点只需要把结果捡起来：
+
+```bash
+python3 scripts/publish-local-renders.py ~/work/paper-pipeline/data/jobs --dry-run
+python3 scripts/publish-local-renders.py ~/work/paper-pipeline/data/jobs
+npm run covers && npm run validate
+```
+
+slug 仍由各 job 的 `metadata.json` 经 `TITLE_FIX` / `SLUG_FIX` 推出，已发布链接不会变。
+两条安全规则来自这个 job store 的实际情况：
+
+- **同一篇取最新那次渲染**。store 里会堆着同一篇的多次运行（旧版排版、失败的尝试），
+  按 mtime 选并把选择打印出来，便于核对（本次 frontier / memocr / prefill-decode 各有两份）。
+- **只更新已发布过的 slug**。store 里可能有站上没有的论文（本次有三份 `phantora`），
+  新增是一个决定而不是副作用，要加 `--allow-new`。
+
 ## 流水线换了最后一步之后（只重渲染，不重跑）
 
 排版阶段升级（字体、版式、出处样式）后，站上的 PDF 还是旧样式。**不要重跑整条流水线**：那会重新 OCR、
