@@ -101,6 +101,20 @@ window.CONTENT_ITEMS = [
     updated: '2026-07-28',
     accent: 'green'
   },
+  {
+    id: 'phantora',
+    category: 'papers',
+    type: '论文解构',
+    title: "Phantora: Maximizing Code Reuse in Simulation-based Machine Learning System Performance Estimation",
+    subtitle: "Jianxing Qin 等 · 2026 · NSDI '26",
+    description: "现代机器学习（ML）训练工作负载对计算和通信资源提出了巨大需求。因此，准确的性能估算对于指导系统设计决策（例如并行化策略的选择、集群配置和硬件资源供给）变得越来越关键。现有的基于模拟的性能估算需要在模拟器中重新实现 ML 框架，这需要巨…",
+    tags: ["ML Systems", "GPU Cluster Simulation", "Performance Estimation"],
+    href: 'downloads/phantora.pdf',
+    runData: 'downloads/runs/phantora-run.zip',
+    action: '在阅读器打开',
+    updated: '2026-07-29',
+    accent: 'green'
+  },
   /* END manual: hand-published runs */
   /* BEGIN generated: paper reports */
   {
@@ -407,7 +421,7 @@ window.PAPER_GROUPS = [
   {
     id: 'simulation',
     label: '仿真与模拟',
-    papers: ['frontier', 'simai', 'gpemu']
+    papers: ['frontier', 'simai', 'gpemu', 'phantora']
   },
   {
     id: 'gpu-systems',
@@ -439,6 +453,7 @@ window.PAPER_SOURCES = {
   'prefill-decode-multiplexing': { label: 'DOI', url: 'https://doi.org/10.1145/3779212.3790236' },
   'understanding-diffusion-model-serving-production': { label: 'DOI', url: 'https://doi.org/10.1145/3772052.3772206' },
   'simai': { label: '原文', url: 'https://www.usenix.org/system/files/nsdi25-wang-xizheng-simai.pdf' },
+  'phantora': { label: '原文', url: 'https://www.usenix.org/conference/nsdi26/presentation/qin' },
   // 下列论文流水线没抽到链接，按需手工补：
   // 'image-worth-16x16-words': { label: 'arXiv:2010.11929', url: 'https://arxiv.org/abs/2010.11929' },
 };
