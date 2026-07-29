@@ -2,6 +2,9 @@
 
 这是一个无后端、无数据库的轻量静态 CMS：首页由 `site/assets/catalog.js` 中的内容清单自动渲染，原始 HTML 作为独立页面保留。它适合 GitHub Pages、Cloudflare Pages、Netlify 等任意静态托管服务。
 
+维护要点与易错点整理在 [`.kiro/skills/llm-inference-library/SKILL.md`](.kiro/skills/llm-inference-library/SKILL.md)：
+常用脚本、排版升级后"只重渲染不重跑"的做法、以及 10 条踩过的坑。
+
 ## 已整理的内容
 
 | 类别 | 页面 / 文件 | 固定公开 URL（相对路径） |
