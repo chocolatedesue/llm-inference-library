@@ -115,6 +115,21 @@ window.CONTENT_ITEMS = [
     updated: '2026-07-29',
     accent: 'green'
   },
+  {
+    id: 'deepseek-v4',
+    category: 'papers',
+    type: '论文解构',
+    title: "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+    subtitle: "DeepSeek-AI 等 · 2026",
+    description: "我们推出了 DeepSeek-V4 系列的预览版本，其中包括两款强劲的混合专家（MoE）语言模型——拥有 1.6T 总参数（49B 激活）的 DeepSeek-V4-Pro 和拥有 284B 总参数（13B 激活）的 DeepSeek-…",
+    tags: ["大语言模型", "混合专家模型", "长上下文"],
+    source: { label: "arXiv:2606.19348", url: "https://arxiv.org/abs/2606.19348" },
+    href: 'downloads/deepseek-v4.pdf',
+    runData: 'downloads/runs/deepseek-v4-run.zip',
+    action: '在阅读器打开',
+    updated: '2026-07-30',
+    accent: 'green'
+  },
   /* END manual: hand-published runs */
   /* BEGIN generated: paper reports */
   {
@@ -435,7 +450,8 @@ window.PAPER_GROUPS = [
       'attention-all-you-need',
       'image-worth-16x16-words',
       'deep-residual-learning-image-recognition',
-      'memocr'
+      'memocr',
+      'deepseek-v4'
     ]
   }
 ];
